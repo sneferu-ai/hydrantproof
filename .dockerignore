@@ -1,0 +1,22 @@
+# Keep the image build context to the product itself.  The SOD delivery lane
+# stages its own build context and ignore file; this one governs a customer's
+# plain `docker build .` from a checkout — no VCS data, no agent/runtime
+# scratch, no collected or uploaded artifacts (collectstatic rebuilds
+# staticfiles/ at image build; media/ is the managed volume's mountpoint).
+.git/
+.gitignore
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tmp/
+.cache/
+.sneferu_coder/
+.claude/
+media/
+staticfiles/
+.env
+.env.*
+*.log
+.DS_Store

@@ -1,0 +1,202 @@
+{% extends "ledger/base.html" %}
+{% load static ui %}
+{% block title %}Flow test — {{ hydrant.asset_tag }} — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Flow test · <a href="/hydrants/{{ hydrant.pk }}/">{{ hydrant.asset_tag }}</a></p>
+    <h1 class="page-head__title">Record a flow test</h1>
+    <p class="page-head__sub">
+      {{ hydrant.location_description|default:"No location description recorded" }} ·
+      outlet {{ hydrant.outlet_diameter_in }} in at coefficient {{ hydrant.discharge_coefficient }}.
+      The server computes the discharge and the rated flow at {{ target_residual_psi|floatformat:0 }} psi residual —
+      this page only previews them, and nothing is stored until you submit.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--ghost" href="/hydrants/{{ hydrant.pk }}/">Cancel</a>
+  </div>
+</div>
+
+{% if not can_write %}
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Your role is read-only.</strong>
+    Recording a flow test needs the <span class="mono">editor</span> role or above; the form below is shown for
+    reference and its controls are disabled. Ask a district administrator to raise your role.
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid--wide-left">
+  <form class="stack" id="test-form" method="post"
+          action="/api/v1/hydrants/{{ hydrant.pk }}/tests/"
+          data-hydrant-id="{{ hydrant.pk }}" data-max-outlets="{{ max_outlets }}" novalidate>
+    {% csrf_token %}
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Test</h2><span class="panel__meta">who, when, and what it corrects</span></div>
+      <div class="panel__body">
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="tested_on">Tested on</label>
+            <input class="input" type="date" id="tested_on" name="tested_on" value="{{ today|date:'Y-m-d' }}" required>
+            <p class="field__hint">The date the readings were taken, not the date they were entered.</p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="crew_names">Crew <span class="field__req">optional</span></label>
+            <input class="input" id="crew_names" name="crew_names" maxlength="255" placeholder="Who ran the test">
+          </div>
+          <div class="field">
+            <label class="field__label" for="supersedes">Corrects an earlier test <span class="field__req">optional</span></label>
+            <select class="select" id="supersedes" name="supersedes">
+              <option value="">No — this is a new test</option>
+              {% for candidate in supersede_candidates %}
+              <option value="{{ candidate.pk }}">#{{ candidate.pk }} · {{ candidate.tested_on }} · {{ candidate.computed_total_gpm|gpm:1 }} gpm</option>
+              {% endfor %}
+            </select>
+            <p class="field__hint">A correction supersedes the earlier test; both rows stay in the ledger.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Gauge readings</h2><span class="panel__meta">static and residual</span></div>
+      <div class="panel__body">
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="static_psi">Static pressure</label>
+            <input class="input input--num" type="number" step="0.01" min="0" max="{{ max_static_psi }}"
+                   id="static_psi" name="static_psi" required inputmode="decimal">
+            <p class="field__hint">At or below {{ max_static_psi|floatformat:0 }} psi.</p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="residual_psi">Residual pressure</label>
+            <input class="input input--num" type="number" step="0.01" min="0" max="{{ max_static_psi }}"
+                   id="residual_psi" name="residual_psi" required inputmode="decimal">
+            <p class="field__hint">Below {{ target_residual_psi|floatformat:0 }} psi the extrapolation is
+              conservative (Q_R &lt; Q_F) and the reading is credited by default.</p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="measured_total_gpm">Meter total <span class="field__req">optional</span></label>
+            <input class="input input--num" type="number" step="0.1" min="0"
+                   id="measured_total_gpm" name="measured_total_gpm" inputmode="decimal">
+            <p class="field__hint">When a meter reading exists it is authoritative; the pitot sum is kept for comparison.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Outlet readings</h2>
+        <span class="panel__meta">up to {{ max_outlets }} outlets · pitot in psi</span>
+      </div>
+      <div class="panel__body">
+        <datalist id="coefficient-presets">
+          {% for preset, value in coefficient_presets.items %}<option value="{{ value }}">{{ preset }}</option>{% endfor %}
+        </datalist>
+        <div class="outlet-grid" id="outlet-grid">
+          <div class="outlet-row" data-row>
+            <span class="outlet-row__n" data-outlet-number>1</span>
+            <div class="field">
+              <label class="field__label" for="diameter-0">Diameter (in)</label>
+              <input class="input input--num" id="diameter-0" type="number" step="0.01" min="0.01" max="12"
+                     value="{{ hydrant.outlet_diameter_in }}" data-outlet="diameter" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label class="field__label" for="coefficient-0">Coefficient</label>
+              <input class="input input--num" id="coefficient-0" type="number" step="0.01" min="0.01" max="1"
+                     list="coefficient-presets" value="{{ hydrant.discharge_coefficient }}"
+                     data-outlet="coefficient" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label class="field__label" for="pitot-0">Pitot (psi)</label>
+              <input class="input input--num" id="pitot-0" type="number" step="0.01" min="0" max="{{ max_pitot_psi }}"
+                     data-outlet="pitot" inputmode="decimal">
+            </div>
+            <div class="outlet-row__computed" data-computed><span class="dash">—</span></div>
+            <button type="button" class="btn btn--ghost btn--sm" data-remove-outlet hidden
+                    aria-label="Remove this outlet row">Remove</button>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn--secondary btn--sm" id="add-outlet">Add outlet</button>
+          <span class="small" id="outlet-count"></span>
+        </div>
+      </div>
+      <p class="panel__note">
+        Discharge per outlet is <span class="mono">q = 29.83 · c · d² · √p</span> — the NFPA 291 method as this
+        build pins it. A row with an empty pitot reading is not sent.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Photos</h2><span class="panel__meta">gauge or nameplate</span></div>
+      <div class="panel__body">
+        <div class="dropzone">
+          <label class="field__label" for="photos">Attach up to 4 photos</label>
+          <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp" multiple>
+          <p class="field__hint">
+            JPEG, PNG or WebP, ≤ 5 MB each. The server re-encodes to JPEG at ≤ 1600 px and strips EXIF — the
+            capture timestamp and any GPS position are extracted first and stored as metadata, never as location data.
+          </p>
+          <div class="dropzone__list" id="photo-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="btn-row" id="form-actions">
+      <button type="submit" class="btn" id="submit-test"{% if sample_data_banner %} data-confirm="Recording a real (non-sample) row deactivates every published demo account in the same transaction. That is the product&rsquo;s design: a published password must never guard real data. Continue?" data-confirm-title="This writes the district&rsquo;s first real record" data-confirm-accept="Record and deactivate demo accounts" data-confirm-danger="true"{% endif %} {% if not can_write %}disabled aria-disabled="true" title="Read-only role"{% endif %}>
+        Record flow test
+      </button>
+      <a class="btn btn--ghost" href="/hydrants/{{ hydrant.pk }}/">Cancel</a>
+      <span class="small" id="submit-status" role="status"></span>
+    </div>
+
+    <div id="success-panel" hidden></div>
+  </form>
+
+  <aside class="stack">
+    <section class="panel readout-card">
+      <div class="panel__head">
+        <h2 class="panel__title">Computed result</h2>
+        <span class="panel__meta">preview · nothing stored</span>
+      </div>
+      <div class="panel__body readout readout--empty" id="readout">
+        <p class="notice__title">Waiting for readings.</p>
+        <p class="small">Enter the static and residual pressures and at least one pitot reading; the discharge,
+          the rated flow and the class appear here as you type.</p>
+      </div>
+      <p class="panel__note">
+        Computed by <span class="mono">POST /api/v1/compute-preview/</span> — the same route the API serves, so
+        the number you see here is the number that will be stored. Formula
+        <span class="mono">{{ formula_version }}</span>.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">How the numbers are made</h2></div>
+      <div class="panel__body">
+        <p class="small"><strong>Q_F</strong> — the total discharge from the pitot readings, or the meter total
+          when one is given.</p>
+        <p class="small"><strong>Q_R</strong> — the rated available flow extrapolated to
+          {{ target_residual_psi|floatformat:0 }} psi residual, capped at
+          {{ max_static_psi|floatformat:0 }} psi static.</p>
+        <p class="small"><strong>Class</strong> — the NFPA 291 colour class of that rated flow. Provisional
+          bands; verify against a licensed NFPA 291 edition before relying on them.</p>
+        <p class="small"><strong>Warnings</strong> — {{ warnings|length }} checks run on every test
+          (below-target static, sub-target residual, excessive extrapolation, meter/pitot divergence, duplicate
+          readings). A warning is information: it never silently changes a stored number.</p>
+      </div>
+    </section>
+  </aside>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'ledger/flowtest.js' %}"></script>
+{% endblock %}

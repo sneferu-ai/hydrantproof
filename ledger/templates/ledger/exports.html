@@ -1,0 +1,117 @@
+{% extends "ledger/base.html" %}
+{% block title %}Exports and forms — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Paper and interchange</p>
+    <h1 class="page-head__title">Exports and printable forms</h1>
+    <p class="page-head__sub">
+      Everything the district hands to somebody else: the dispatch list for the trucks, the two printable forms for
+      the clipboard, and the versioned JSON ledger for a backup or a county hand-off.
+    </p>
+  </div>
+</div>
+
+<div class="grid grid--2">
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Dispatch CSV</h2>
+      <span class="panel__meta">viewer-readable</span>
+    </div>
+    <div class="panel__body">
+      <p class="small">
+        One row per hydrant in service, in fixed column order, carrying the field-verify literal
+        <em>"{{ verify_in_field }}"</em> and the disclaimer on every row. Retired hydrants are excluded, a leading
+        <span class="mono">=</span> is neutralised so a spreadsheet cannot execute a cell, and west longitudes are
+        written un-prefixed.
+      </p>
+      <p class="small">The file is a download, not a page — a browser will save it rather than render it.</p>
+      <div class="btn-row">
+        <a class="btn" href="/api/v1/exports/dispatch/">Download dispatch CSV</a>
+      </div>
+    </div>
+    <p class="panel__note">Every download through this route is written to the export audit with the row count and
+      the operator.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Printable forms</h2>
+      <span class="panel__meta">PDF, base-14 fonts</span>
+    </div>
+    <div class="panel__body">
+      <p class="small">
+        Two forms for the clipboard: a per-outlet flow-test sheet in the NFPA 291 column layout, and the hydrant
+        inventory. Both carry the provisional-constants note and the disclaimer footer, and both render offline —
+        the container ships no font that is not already inside it.
+      </p>
+      <div class="btn-row">
+        <a class="btn btn--secondary" href="/api/v1/exports/forms/flow-test/">Flow-test form (PDF)</a>
+        <a class="btn btn--secondary" href="/api/v1/exports/forms/inventory/">Inventory form (PDF)</a>
+      </div>
+    </div>
+    <p class="panel__note">{{ provisional_banner }}</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Versioned ledger export</h2>
+      <span class="panel__meta">administrator only</span>
+    </div>
+    <div class="panel__body">
+      <p class="small">
+        The complete ledger as versioned JSON — the backup/restore lane and the inter-district path, and the only
+        export that carries user records. It shares the restore lane's authorization rather than the generic read
+        rule: the button is disabled for a non-administrator, and the route itself answers
+        <span class="mono">403</span> for one.
+      </p>
+      <div class="btn-row">
+        {% if is_admin %}
+        <a class="btn btn--secondary" href="/api/v1/exports/ledger/">Download ledger JSON</a>
+        {% else %}
+        <span class="btn btn--secondary" aria-disabled="true" title="Administrator role required">Download ledger JSON</span>
+        {% endif %}
+      </div>
+    </div>
+    <p class="panel__note">Restoring is a management command run against a fresh database: the export preserves
+      primary keys so the ledger's references survive the round trip.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Imports</h2>
+      <span class="panel__meta">two-phase, audited</span>
+    </div>
+    <div class="panel__body">
+      <p class="small">
+        Every import is a dry run followed by a commit: the dry run stores the exact file it read and returns
+        row-level errors; the commit requires a single-use, user-bound token that expires after 24 hours. A
+        re-upload at commit time is hash-checked against the dry run.
+      </p>
+      <div class="btn-row">
+        <a class="btn btn--ghost" href="/static/ledger/import_templates/hydrants.csv">Hydrant template</a>
+        <a class="btn btn--ghost" href="/static/ledger/import_templates/parcels.csv">Parcel template</a>
+        <a class="btn btn--ghost" href="/static/ledger/import_templates/flow-tests.csv">Flow-test template</a>
+      </div>
+    </div>
+    <p class="panel__note">
+      Importing is an API operation by design — it is scriptable, and the dry run is what makes it safe.
+      <span class="mono">POST /api/v1/imports/hydrants/</span> with <span class="mono">mode=DRY_RUN</span>, then
+      again with the returned commit token. The history is an API read:
+      <a class="mono" href="/api/v1/imports/">GET /api/v1/imports/</a>.
+    </p>
+  </section>
+
+</div>
+
+<section class="panel">
+  <div class="panel__head"><h2 class="panel__title">What every artifact says about itself</h2></div>
+  <div class="panel__body">
+    <p class="small">{{ artifact_label }}</p>
+    <p class="small">{{ disclaimer }}</p>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — HydrantProof</title>
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("hydrantproof.theme");
+    if (stored === "light" || stored === "dark") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (error) { /* storage blocked: follow the OS */ }
+})();
+</script>
+<link rel="stylesheet" href="{% static 'ledger/tokens.css' %}">
+<link rel="stylesheet" href="{% static 'ledger/app.css' %}">
+</head>
+<body class="login-body">
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="login-shell">
+  <main id="main" class="login-card" tabindex="-1">
+    {% include "ledger/_mark.html" with class="login-card__mark" %}
+    <h1 class="login-card__title">HydrantProof</h1>
+    <p class="login-card__sub">
+      District water-supply records. Hydrant locations are sensitive infrastructure data — sign in with the
+      account the district issued you.
+    </p>
+
+    {% if error %}
+    <p class="error" role="alert" id="login-error">{{ error }}</p>
+    {% endif %}
+
+    <p class="login-note" id="preview-note" hidden></p>
+
+    <form method="post" action="/login/">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label class="field__label" for="username">Username</label>
+        <input class="input" id="username" name="username" autocomplete="username" required autofocus
+               {% if error %}aria-invalid="true" aria-describedby="login-error"{% endif %}>
+      </div>
+      <div class="field">
+        <label class="field__label" for="password">Password</label>
+        <input class="input" id="password" name="password" type="password" autocomplete="current-password" required
+               {% if error %}aria-invalid="true" aria-describedby="login-error"{% endif %}>
+      </div>
+      <button type="submit" class="btn">Sign in</button>
+    </form>
+  </main>
+</div>
+<footer class="login-foot">
+  <p class="small">{{ artifact_label }}</p>
+</footer>
+<script src="{% static 'ledger/preview-bootstrap.js' %}"></script>
+</body>
+</html>

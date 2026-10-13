@@ -1,0 +1,214 @@
+{% extends "ledger/base.html" %}
+{% load static ui %}
+{% block title %}Coverage — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Water-supply worksheet</p>
+    <h1 class="page-head__title">Distribution coverage</h1>
+    <p class="page-head__sub">
+      For each protected parcel, every hydrant inside {{ district.credit_radius_ft|floatformat:0 }} ft with its
+      credited contribution or its explicit exclusion reason. Credit radius and windows are frozen into each run's
+      snapshot, so a run always means what it meant when it finished.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--secondary" href="/packs/">Generate an evidence pack</a>
+  </div>
+</div>
+
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>The headline metric is distribution, not points.</strong>
+    Credited-hydrant count bands (3+ / 2 / 1 / 0) per protected parcel are the product's own measure. The summed
+    flow band is a district-computed proxy, not the FSRS distribution criterion, and no classification is
+    predicted anywhere in this product. Sub-target-residual tests are
+    {% if district.exclude_residual_below_target %}excluded (the opt-in exclusion is enabled){% else %}credited by default (the opt-in exclusion is disabled){% endif %}.
+  </div>
+</div>
+
+{% if staleness.stale %}
+<div class="banner banner--stale" role="status">
+  {% include "ledger/_icon.html" with name="alert" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>The latest run is stale.</strong> {{ staleness.reasons|join:"; " }}. Run coverage again to refresh the
+    worksheet.
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid--2">
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Run coverage</h2>
+      <span class="panel__meta">one job at a time</span>
+    </div>
+    <div class="panel__body">
+      {% if in_flight %}
+      <p class="small">Run #{{ in_flight.pk }} is in flight — the form is disabled until it finishes.</p>
+      {% else %}
+      <p class="small">A run walks every protected parcel against every in-service hydrant and freezes the
+        parameters it used into its snapshot.</p>
+      {% endif %}
+      <form method="post" id="run-coverage-form" action="/api/v1/coverage-runs/"
+            {% if in_flight %} data-resume-poll="/api/v1/coverage-runs/{{ in_flight.pk }}/"{% endif %}>
+        {% csrf_token %}
+        <fieldset class="stack stack--tight">
+          <legend class="field__label">Scope</legend>
+          <div class="segmented" role="radiogroup" aria-label="Coverage scope">
+            <label>
+              <input type="radio" name="coverage_scope" value="all" checked>
+              <span>Whole district</span>
+            </label>
+            <label>
+              <input type="radio" name="coverage_scope" value="bbox">
+              <span>Bounding box</span>
+            </label>
+          </div>
+          <div class="field-row" id="bbox-fields" hidden>
+            <div class="field">
+              <label class="field__label" for="bbox_min_lon">West longitude</label>
+              <input class="input input--num" id="bbox_min_lon" type="number" step="0.000001" min="-180" max="180" disabled>
+            </div>
+            <div class="field">
+              <label class="field__label" for="bbox_min_lat">South latitude</label>
+              <input class="input input--num" id="bbox_min_lat" type="number" step="0.000001" min="-80" max="80" disabled>
+            </div>
+            <div class="field">
+              <label class="field__label" for="bbox_max_lon">East longitude</label>
+              <input class="input input--num" id="bbox_max_lon" type="number" step="0.000001" min="-180" max="180" disabled>
+            </div>
+            <div class="field">
+              <label class="field__label" for="bbox_max_lat">North latitude</label>
+              <input class="input input--num" id="bbox_max_lat" type="number" step="0.000001" min="-80" max="80" disabled>
+            </div>
+          </div>
+          <p class="field__hint">
+            A filtered run covers only the protected parcels inside the box, and the run's snapshot records the
+            filter — so the worksheet still says exactly what it measured.
+          </p>
+        </fieldset>
+        <div class="btn-row">
+          <button type="submit" class="btn" data-async-busy="Starting…"{% if in_flight %} disabled{% endif %}>Run coverage now</button>
+          <span class="small" id="run-status" role="status"></span>
+        </div>
+      </form>
+    </div>
+    <p class="panel__note">
+      A run is asynchronous: it returns 202 and the page polls the run until it completes or fails, naming which
+      one happened.
+    </p>
+  </section>
+
+  {% if latest_run %}
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Latest complete run #{{ latest_run.pk }}</h2>
+      <span class="panel__meta">frozen {{ latest_run.snapshot_ts|date:"Y-m-d H:i" }}</span>
+    </div>
+    <div class="props">
+      <div class="prop">
+        <span class="prop__k">Pairs evaluated</span>
+        <span class="prop__v num">{{ latest_run.pair_count }}</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Inside the radius</span>
+        <span class="prop__v num">{{ latest_run.in_radius_count }}</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Covered parcels</span>
+        <span class="prop__v num">{{ latest_run.covered_count }}<span class="num__unit">of {{ latest_run.protected_parcel_count }}</span></span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Flow-test recency</span>
+        <span class="prop__v num">{{ latest_run.recency_days }}<span class="num__unit">days</span></span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Inspection recency</span>
+        <span class="prop__v num">{{ latest_run.inspection_recency_days }}<span class="num__unit">days</span></span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Credit radius</span>
+        <span class="prop__v num">{{ latest_run.credit_radius_ft|floatformat:0 }}<span class="num__unit">ft</span></span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Distribution bands</span>
+        <span class="prop__v mono small">{{ latest_run.credited_band_counts }}</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">params_sha256</span>
+        <span class="prop__v mono small">{{ latest_run.params_sha256|slice:":16" }}…</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">core_params_sha256</span>
+        <span class="prop__v mono small">{{ latest_run.core_params_sha256|slice:":16" }}…</span>
+      </div>
+    </div>
+    <p class="panel__note">
+      The snapshot hash is what makes the worksheet reproducible: the same parameters hash to the same digest,
+      and a pack rendered from this run carries the frozen numbers.
+    </p>
+  </section>
+  {% endif %}
+
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Run history</h2>
+    <span class="panel__count">{{ recent_runs|length }}</span>
+    <span class="panel__meta">newest first</span>
+  </div>
+  {% if recent_runs %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col" class="is-num">#</th>
+          <th scope="col">Status</th>
+          <th scope="col">Filter</th>
+          <th scope="col" class="is-num">Pairs</th>
+          <th scope="col" class="is-num">In radius</th>
+          <th scope="col" class="is-num">Covered</th>
+          <th scope="col" class="is-num">Started</th>
+          <th scope="col" class="is-num">Finished</th>
+          <th scope="col">Failure</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in recent_runs %}
+        <tr class="ledger-row {% if run.status == 'COMPLETE' %}ledger-row--ready{% elif run.status == 'FAILED' %}ledger-row--notready{% else %}ledger-row--watch{% endif %}">
+          <th scope="row" class="is-num">{{ run.pk }}</th>
+          <td class="nowrap">
+            <span class="badge {% if run.status == 'COMPLETE' %}badge--ready{% elif run.status == 'FAILED' %}badge--notready{% else %}badge--watch{% endif %}">
+              {% if run.status == "COMPLETE" %}<span class="dot dot--ready" aria-hidden="true"></span>{% elif run.status == "FAILED" %}<span class="dot dot--notready" aria-hidden="true"></span>{% else %}<span class="dot dot--watch" aria-hidden="true"></span>{% endif %}{{ run.status|title }}
+            </span>
+          </td>
+          <td class="small">{{ run.parcel_filter|default:"—" }}</td>
+          <td class="is-num">{{ run.pair_count }}</td>
+          <td class="is-num">{{ run.in_radius_count }}</td>
+          <td class="is-num">{{ run.covered_count }}</td>
+          <td class="is-num nowrap">{{ run.started_at|date:"Y-m-d H:i"|default:"—" }}</td>
+          <td class="is-num nowrap">{{ run.finished_at|date:"Y-m-d H:i"|default:"—" }}</td>
+          <td class="small">{{ run.failure_reason|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="notice">
+    <p class="notice__title">No coverage runs yet.</p>
+    <p class="notice__next">Run coverage once the registry and the parcel list are loaded — the worksheet is built
+      from both.</p>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'ledger/coverage.js' %}"></script>
+{% endblock %}

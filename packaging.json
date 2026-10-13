@@ -1,0 +1,24 @@
+{
+  "requirements_file": "requirements.txt",
+  "system_deps": [],
+  "container_port": 8000,
+  "env_var_names": [
+    "DATABASE_URL", "DJANGO_SECRET_KEY", "PORT",
+    "ALLOWED_HOSTS", "DJANGO_DEBUG", "CSRF_TRUSTED_ORIGINS",
+    "SEED_DEMO", "MAP_TILE_URL", "MAP_TILE_ATTRIBUTION",
+    "COOKIE_SECURE", "TRUST_PROXY_HEADERS", "ALLOW_INSECURE_LOOPBACK",
+    "ALERT_WEBHOOK_URL"
+  ],
+  "env_defaults": {
+    "SEED_DEMO": "true", "DJANGO_DEBUG": "false",
+    "ALLOWED_HOSTS": "*", "CSRF_TRUSTED_ORIGINS": "",
+    "MAP_TILE_URL": "", "MAP_TILE_ATTRIBUTION": "",
+    "COOKIE_SECURE": "false", "TRUST_PROXY_HEADERS": "false",
+    "ALLOW_INSECURE_LOOPBACK": "", "ALERT_WEBHOOK_URL": ""
+  },
+  "health_endpoint": "/healthz",
+  "runtime_test_mode": "playwright",
+  "runtime_test_command": "PORT={port} ./entrypoint.sh",
+  "test_command": "python3 -m pytest tests/ -q --tb=short -m \"not scale\"",
+  "browser_smoke_plan": "test_plan.md"
+}

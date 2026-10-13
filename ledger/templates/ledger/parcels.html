@@ -1,0 +1,106 @@
+{% extends "ledger/base.html" %}
+{% block title %}Protected parcels — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Worksheet inputs</p>
+    <h1 class="page-head__title">Protected parcels</h1>
+    <p class="page-head__sub">
+      {{ total }} parcel{{ total|pluralize }} imported · {{ protected }} protected
+      · {{ overridden }} with an explicit structure point instead of a centroid.
+      Every protected parcel becomes a row of the water-supply worksheet.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--secondary" href="/coverage/">Run the worksheet</a>
+  </div>
+</div>
+
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Centroids are a proxy.</strong> {{ centroid_note }}
+    Where the district knows the real structure position, set an override on the parcel —
+    the worksheet uses the override the moment it exists.
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Parcel register</h2>
+    <span class="panel__count">{{ parcels|length }}</span>
+    <span class="panel__meta">{% if truncated %}first 500 of {{ total }}{% else %}all parcels{% endif %}</span>
+  </div>
+
+  <form class="panel__body action-panel" method="get" action="/parcels/" role="search">
+    <div class="action-panel__row">
+      <div class="field">
+        <label class="field__label" for="q">Search</label>
+        <input class="input" id="q" name="q" value="{{ query }}" placeholder="Parcel id or address">
+      </div>
+      <button type="submit" class="btn btn--secondary">Apply filter</button>
+      {% if query %}<a class="btn btn--ghost" href="/parcels/">Clear</a>{% endif %}
+    </div>
+  </form>
+
+  {% if parcels %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Parcel id</th>
+          <th scope="col">Address</th>
+          <th scope="col" class="is-num">Centroid lat</th>
+          <th scope="col" class="is-num">Centroid lon</th>
+          <th scope="col">Structure point</th>
+          <th scope="col">Protected</th>
+          <th scope="col">Type</th>
+          <th scope="col">Source organization</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for parcel in parcels %}
+        <tr class="ledger-row ledger-row--none">
+          <th scope="row" class="mono nowrap"><a href="/parcels/{{ parcel.pk }}/">{{ parcel.parcel_id }}</a></th>
+          <td class="truncate">{{ parcel.address|default:"—" }}</td>
+          <td class="is-num">{{ parcel.lat|floatformat:5 }}</td>
+          <td class="is-num">{{ parcel.lon|floatformat:5 }}</td>
+          <td class="nowrap">
+            {% if parcel.structure_lat is not None %}
+            <span class="badge badge--info">Override</span>
+            <span class="mono small">{{ parcel.structure_lat|floatformat:5 }}, {{ parcel.structure_lon|floatformat:5 }}</span>
+            {% else %}<span class="dash">—</span>{% endif %}
+          </td>
+          <td>{% if parcel.is_protected_structure %}<span class="badge badge--ready"><span class="dot dot--ready" aria-hidden="true"></span>Protected</span>{% else %}<span class="badge badge--quiet">Not protected</span>{% endif %}</td>
+          <td>{{ parcel.structure_type|default:"—" }}</td>
+          <td class="truncate">{{ parcel.source_org|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif query %}
+  <div class="notice">
+    <p class="notice__title">No parcel matches "{{ query }}".</p>
+    <p class="notice__next"><a href="/parcels/">Clear the filter</a> to see all {{ total }} parcels.</p>
+  </div>
+  {% else %}
+  <div class="notice">
+    <p class="notice__title">No parcels imported yet.</p>
+    <p class="notice__next">
+      Import the county assessor's parcel list through the two-phase CSV import — dry run first, then commit with
+      the single-use token. The import history is an API read
+      (<a class="mono" href="/api/v1/imports/">GET /api/v1/imports/</a>) ·
+      <a href="/static/ledger/import_templates/parcels.csv">download the parcel template</a>.
+    </p>
+  </div>
+  {% endif %}
+
+  <p class="panel__note">
+    A parcel marked not-protected stays in the register but is excluded from the worksheet, so the district can
+    keep a complete assessor extract without inflating its protected-structure count.
+  </p>
+</section>
+
+{% endblock %}

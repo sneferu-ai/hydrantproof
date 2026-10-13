@@ -1,0 +1,384 @@
+/* ==========================================================================
+   HydrantProof — the closed token layer.
+   Every colour, size, duration and z-index in this product is declared HERE
+   and nowhere else. Components claim tokens by name (`var(--accent)`,
+   `padding: var(--space-3)`); a raw hex, px length or duration outside this
+   file is a defect (see DESIGN.md § 10, enforced by tests/test_ui_system.py).
+
+   Light and dark are authored together. `[data-theme="dark"]` is the explicit
+   operator choice; the media query applies the same block when the operator
+   has not chosen and the OS asks for dark.
+   ========================================================================== */
+
+/* --- Typefaces -----------------------------------------------------------
+   IBM Plex is vendored under ledger/static/ledger/fonts/ (SIL OFL 1.1, license
+   shipped beside the files). The container is offline by design: no webfont may
+   be fetched at runtime. One superfamily for the whole product — the mono is a
+   true companion cut, so a label and the number under it share a skeleton. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url("fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url("fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/ibm-plex-sans-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: light;
+
+  /* --- Surfaces ---------------------------------------------------------- */
+  --bg-base: #F5F3EE;        /* the page: warm paper, never pure white */
+  --bg-sunken: #EDEAE3;      /* table headers, inset wells */
+  --bg-elevated: #FDFCFA;    /* panels — warm near-white, never pure #FFF */
+  --bg-raised: #FBFAF7;      /* row hover, sticky header */
+  --bg-overlay: rgba(27, 26, 23, 0.46);   /* modal scrim */
+  --bg-scrim-map: rgba(245, 243, 238, 0.72); /* over-map legibility plate */
+
+  /* --- Foreground -------------------------------------------------------- */
+  --fg-primary: #1B1A17;     /* never #000 */
+  --fg-secondary: #55514A;
+  --fg-tertiary: #6A665D;    /* labels and metadata; >= 4.5:1 on every surface */
+  --fg-disabled: #A9A399;
+
+  /* --- Borders ----------------------------------------------------------- */
+  --border-subtle: #E7E3DA;
+  --border-default: #D5D0C5;
+  --border-strong: #B4AEA1;
+  --border-input: #7E7A70;   /* >= 3:1 against the input fill and the page: WCAG 1.4.11 */
+  --border-focus: #0F3D4F;
+
+  /* --- The one accent (petrol) ------------------------------------------- */
+  --accent: #0F3D4F;
+  --accent-hover: #155267;
+  --accent-pressed: #0A2C3A;
+  --accent-soft: #E3EEF2;
+  --accent-on: #FBFAF7;
+
+  /* --- Status: four hues at matched saturation ---------------------------
+     Always paired with a dot, a word and (where a row is involved) the rail. */
+  --status-ready: #1E6F3C;
+  --status-ready-bg: #E3F0E7;
+  --status-ready-border: #BEDCC7;
+  --status-ready-edge: #1E6F3C;
+
+  --status-watch: #8A5305;
+  --status-watch-bg: #FAEFDA;
+  --status-watch-border: #E8D3A8;
+  --status-watch-edge: #8A5305;
+
+  --status-notready: #A32A1E;
+  --status-notready-bg: #FBE8E5;
+  --status-notready-border: #F0C2BB;
+  --status-notready-edge: #A32A1E;
+
+  --status-neutral: #625E56;
+  --status-neutral-bg: #EEECE6;
+  --status-neutral-border: #DAD6CC;
+  --status-neutral-edge: #625E56;
+
+  --status-info: #0F3D4F;
+  --status-info-bg: #E3EEF2;
+  --status-info-border: #C3DAE3;
+
+
+  /* --- Capacity class (NFPA 291 colour code) ------------------------------
+     Deliberately mirrors ledger/constants.py::CAPACITY_CLASS_COLORS, which the
+     ReportLab pack renderer draws with. Two renderers, one palette: the map and
+     the pack must never disagree about what "class A" looks like. The values
+     are provisional and verification-gated (constants.py says so) — a change
+     must land in both places at once. */
+  --class-aa: #7FC4E8;
+  --class-a: #4CAF50;
+  --class-b: #FF9800;
+  --class-c: #EC4E42;        /* one step lighter than the stock red so the ink letter clears 4.5:1 */
+  --class-none: #9E9E9E;
+  --class-ink: #1B1A17;      /* the letter on a class chip: ink, never the hue */
+
+  /* --- Type -------------------------------------------------------------- */
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 19px;
+  --text-2xl: 23px;
+  --text-3xl: 28px;
+  --text-input-mobile: 16px;   /* stops iOS auto-zoom on focus */
+
+  --line-tight: 1.15;
+  --line-snug: 1.3;
+  --line-normal: 1.5;
+  --line-relaxed: 1.65;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --track-label: 0.06em;    /* uppercase micro-labels only */
+  --track-snug: -0.005em;   /* panel titles */
+  --track-tight: -0.01em;   /* the wordmark and small display lines */
+  --track-tighter: -0.015em; /* page titles */
+  --track-tightest: -0.02em; /* the large mono readout */
+
+  /* --- Spacing (4pt base) ------------------------------------------------ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 96px;
+
+  /* --- Shape ------------------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+  --radius-full: 50%;
+
+  /* --- Elevation: one scale, one direction (down) ------------------------ */
+  --shadow-0: none;
+  --shadow-1: 0 1px 0 rgba(27, 26, 23, 0.04);
+  --shadow-2: 0 1px 2px rgba(27, 26, 23, 0.06), 0 1px 1px rgba(27, 26, 23, 0.04);
+  --shadow-3: 0 8px 24px -6px rgba(27, 26, 23, 0.18), 0 1px 2px rgba(27, 26, 23, 0.08);
+  --shadow-4: 0 24px 48px -12px rgba(27, 26, 23, 0.28);
+  --lift: translateY(-1px);
+
+  /* --- Motion ------------------------------------------------------------ */
+  --dur-none: 1ms;        /* the reduced-motion floor; a named value, not a magic one */
+  --dur-instant: 50ms;
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 300ms;
+  --dur-shimmer: 1400ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  /* The one choreographed entrance: the page head, in three steps. */
+  --stagger-1: 60ms;
+  --stagger-2: 120ms;
+  --underline-offset: 2px;
+
+  /* --- Focus ring (one ring, everywhere) --------------------------------- */
+  --focus-ring: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--border-focus);
+
+  /* --- Layout ------------------------------------------------------------ */
+  --shell-nav: 232px;
+  --shell-max: 1440px;
+  --row-h: 44px;
+  --control-h: 32px;
+  --hit-min: 44px;      /* minimum hit zone; the visible control may be smaller */
+  --rail-w: 3px;        /* the status rail on a ledger row */
+
+  /* --- Structural constants ---------------------------------------------
+     Named so that no component file needs a raw length. */
+  --hairline: 1px;
+  --dot: 6px;
+  --pip: 11px;
+  --pip-gap: 3px;
+  /* The pointer target of one readiness-board square. The visible square is
+     `--pip`; the hit zone is this, anchored to the square's top-left so each
+     pip owns its own cell and a neighbour can never claim a visible square.
+     24px is the WCAG 2.2 AA floor (2.5.8 Target Size, Minimum); the 3px
+     mosaic pitch is what caps it, so the two tokens move together. */
+  --hit-pad: 24px;
+  --icon: 16px;
+  --icon-lg: 20px;
+  --bar-h: 10px;
+  --skeleton-h: 11px;
+  --map-h: 340px;
+  --modal-w: 480px;
+  --modal-w-lg: 660px;
+  --col-resolve: 352px;
+  --col-rail: calc(var(--shell-nav) * 1.45);   /* the detail page's property rail */
+  --field-min: calc(var(--shell-nav) * 0.8);   /* one control's minimum width */
+  --field-grow: calc(var(--shell-nav) * 1.2);  /* a control that should take the row */
+  --width-short: 40%;                          /* a skeleton line that stops early */
+  --measure: 72ch;
+  --measure-tight: 56ch;
+  --press: translateY(1px);
+  --rise: translateY(4px);
+  --shift: 40%;
+
+  /* --- Z-index: enumerated, never inline --------------------------------- */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-modal-bg: 900;
+  --z-modal: 1000;
+  --z-toast: 1100;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-base: #101215;
+  --bg-sunken: #0B0D0F;
+  --bg-elevated: #171A1E;
+  --bg-raised: #1D2126;
+  --bg-overlay: rgba(0, 0, 0, 0.62);
+  --bg-scrim-map: rgba(16, 18, 21, 0.74);
+
+  --fg-primary: #E9E6E0;
+  --fg-secondary: #A8A39A;
+  --fg-tertiary: #8C877D;
+  --fg-disabled: #726E66;
+
+  --border-subtle: #23272C;
+  --border-default: #2F343A;
+  --border-strong: #474D55;
+  --border-input: #6B727A;   /* >= 3:1 against the input fill and the page: WCAG 1.4.11 */
+  --border-focus: #74B8CE;
+
+  --accent: #74B8CE;
+  --accent-hover: #8FC9DC;
+  --accent-pressed: #529BB2;
+  --accent-soft: #16303A;
+  --accent-on: #0A171C;
+
+  --status-ready: #6FC58C;
+  --status-ready-bg: #12301E;
+  --status-ready-border: #1F4A31;
+  --status-ready-edge: #4FAF72;
+
+  --status-watch: #E0A855;
+  --status-watch-bg: #33240C;
+  --status-watch-border: #4E3A16;
+  --status-watch-edge: #C9903F;
+
+  --status-notready: #E88274;
+  --status-notready-bg: #3A1713;
+  --status-notready-border: #5A2620;
+  --status-notready-edge: #D26A5C;
+
+  --status-neutral: #A29C92;
+  --status-neutral-bg: #23262A;
+  --status-neutral-border: #343940;
+  --status-neutral-edge: #8A857C;
+
+  --status-info: #74B8CE;
+  --status-info-bg: #16303A;
+  --status-info-border: #26505F;
+
+  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 12px 32px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-4: 0 28px 56px -12px rgba(0, 0, 0, 0.8);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg-base: #101215;
+    --bg-sunken: #0B0D0F;
+    --bg-elevated: #171A1E;
+    --bg-raised: #1D2126;
+    --bg-overlay: rgba(0, 0, 0, 0.62);
+    --bg-scrim-map: rgba(16, 18, 21, 0.74);
+
+    --fg-primary: #E9E6E0;
+    --fg-secondary: #A8A39A;
+    --fg-tertiary: #8C877D;
+    --fg-disabled: #726E66;
+
+    --border-subtle: #23272C;
+    --border-default: #2F343A;
+    --border-strong: #474D55;
+    --border-input: #6B727A;   /* >= 3:1 against the input fill and the page: WCAG 1.4.11 */
+    --border-focus: #74B8CE;
+
+    --accent: #74B8CE;
+    --accent-hover: #8FC9DC;
+    --accent-pressed: #529BB2;
+    --accent-soft: #16303A;
+    --accent-on: #0A171C;
+
+    --status-ready: #6FC58C;
+    --status-ready-bg: #12301E;
+    --status-ready-border: #1F4A31;
+    --status-ready-edge: #4FAF72;
+
+    --status-watch: #E0A855;
+    --status-watch-bg: #33240C;
+    --status-watch-border: #4E3A16;
+    --status-watch-edge: #C9903F;
+
+    --status-notready: #E88274;
+    --status-notready-bg: #3A1713;
+    --status-notready-border: #5A2620;
+    --status-notready-edge: #D26A5C;
+
+    --status-neutral: #A29C92;
+    --status-neutral-bg: #23262A;
+    --status-neutral-border: #343940;
+    --status-neutral-edge: #8A857C;
+
+    --status-info: #74B8CE;
+    --status-info-bg: #16303A;
+    --status-info-border: #26505F;
+
+      --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-3: 0 12px 32px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    --shadow-4: 0 28px 56px -12px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* --- Print: the worksheet and the ledger leave the screen -----------------
+   Print is paper: every surface collapses to white so toner is not wasted and
+   the ruling carries the structure. Declared here because this is the only
+   file allowed to name a colour. */
+@media print {
+  :root {
+    --bg-base: #FFFFFF;
+    --bg-elevated: #FDFCFA;
+    --bg-raised: #FDFCFA;
+    --bg-sunken: #FFFFFF;
+    --shadow-0: none;
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+    --shadow-4: none;
+  }
+}

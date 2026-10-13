@@ -1,0 +1,19 @@
+# HydrantProof ships its UI inside the Python package: Django templates, the
+# one small stylesheet, the page scripts, and the vendored Leaflet dist.
+# `manage.py collectstatic` collects these into STATIC_ROOT at image build time
+# (WhiteNoise serves them at runtime — there is no Node build step).
+include LICENSE
+include README.md
+include packaging.json
+include entrypoint.sh
+include requirements.txt
+include requirements-dev.txt
+recursive-include ledger/templates *.html
+# The stylesheet's @font-face rules point at the vendored IBM Plex webfonts
+# (`*.woff2`) and the SIL OFL license text ships beside them (`*.txt`); the
+# vendored Leaflet dist includes its source map (`*.map`).  Every file the
+# stylesheet references must be in the package — the container is offline by
+# design, so a missing woff2 is a broken font, not a runtime download.
+recursive-include ledger/static *.css *.js *.map *.png *.svg *.md *.txt *.csv *.woff2 LICENSE
+recursive-include ledger/migrations *.py
+include test_plan.md

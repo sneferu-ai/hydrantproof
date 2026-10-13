@@ -1,0 +1,21 @@
+{
+  "plan_sha256": "8f5f411f6ac4cba081bdf57b7a936070d68446d895f92d02aa2c61e8e6d2e887",
+  "schema": "sneferu.sod.runtime-graph/v1",
+  "services": [
+    {
+      "command": [],
+      "connection_env": "DATABASE_URL",
+      "depends_on": [],
+      "image": "sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea",
+      "kind": "postgres",
+      "name": "db"
+    }
+  ],
+  "storage": [
+    {
+      "name": "hydrantproof_media",
+      "path": "/data/hydrantproof_media",
+      "persistent": true
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{% extends "ledger/base.html" %}
+{% load static ui %}
+{% block title %}Evidence packs — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">The district's record</p>
+    <h1 class="page-head__title">Evidence packs</h1>
+    <p class="page-head__sub">
+      A pack is rendered once from a frozen coverage run and stored — the zip and the PDF are served from those
+      stored bytes, and their digests never change. A pack is never regenerated under an existing id.
+    </p>
+  </div>
+</div>
+
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Provisional constants.</strong> {{ provisional_banner }}
+  </div>
+</div>
+
+{% if stack_stale %}
+<div class="banner banner--stale" role="status">
+  {% include "ledger/_icon.html" with name="alert" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>The render stack has changed since pack #{{ newest_pack.pk }} was rendered.</strong>
+    The pack is frozen against <span class="mono">{{ newest_pack.render_stack_version|slice:":16" }}…</span>; this
+    build is <span class="mono">{{ live_render_stack|slice:":16" }}…</span>. The stored pack is still the record of
+    what it rendered — a new pack would be a new row, and its bytes may differ.
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid--2">
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Generate a pack</h2>
+      <span class="panel__meta">one job at a time</span>
+    </div>
+    <div class="panel__body">
+      {% if in_flight %}
+      <p class="small">Pack #{{ in_flight.pk }} is rendering — the form is disabled until it finishes.</p>
+      {% else %}
+      <p class="small">Pick a completed run to render from, or leave it on a fresh run and the pack recomputes
+        coverage first. Rendering walks the frozen snapshot, so the numbers in the pack are the numbers of that
+        run.</p>
+      {% endif %}
+      <form method="post" id="pack-generate-form" action="/api/v1/evidence-packs/"
+            {% if in_flight %} data-resume-poll="/api/v1/evidence-packs/{{ in_flight.pk }}/"{% endif %}>
+        {% csrf_token %}
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="pack-run-id">Coverage run</label>
+            <select class="select" name="run_id" id="pack-run-id">
+              <option value="">fresh run (recompute coverage now)</option>
+              {% for run in complete_runs %}
+              <option value="{{ run.pk }}">run #{{ run.pk }} — {{ run.finished_at|date:"Y-m-d H:i" }} ({{ run.covered_count }}/{{ run.protected_parcel_count }} covered)</option>
+              {% endfor %}
+            </select>
+            <p class="field__hint">A pack rendered from an older run carries that run's snapshot, not today's settings.</p>
+          </div>
+          <div class="field">
+            <label class="check" for="pack-include-attachments">
+              <input type="checkbox" id="pack-include-attachments" name="include_attachments">
+              <span>Include photo attachments — counts against the media budget</span>
+            </label>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn" data-async-busy="Rendering…"{% if in_flight %} disabled{% endif %}>Generate pack</button>
+          <span class="small" id="pack-status" role="status"></span>
+        </div>
+      </form>
+    </div>
+    <p class="panel__note">
+      Rendering returns 202 and the page polls the pack until it completes or fails; a failure states its reason
+      verbatim.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">What is inside</h2>
+      <span class="panel__meta">read from the frozen snapshot</span>
+    </div>
+    <div class="props">
+      <div class="prop">
+        <span class="prop__k">Worksheet</span>
+        <span class="prop__v">Every protected parcel with its credited hydrants and exclusion reasons.</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Registers</span>
+        <span class="prop__v">Hydrant, parcel and settings registers as they stood at the snapshot.</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Derived rows</span>
+        <span class="prop__v">Readiness, recency and trend per hydrant, computed at render time from the snapshot.</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k">Attachments</span>
+        <span class="prop__v">Optional — the checkbox above decides; the count is recorded in the pack's row counts.</span>
+      </div>
+    </div>
+    <p class="panel__note">
+      A pruned pack is a 404; a pack whose stored file is missing is a 410 naming the remedy. Neither ever
+      regenerates silently.
+    </p>
+  </section>
+
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Pack history</h2>
+    <span class="panel__count">{{ packs|length }}</span>
+    <span class="panel__meta">newest first</span>
+  </div>
+  {% if packs %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col" class="is-num">#</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="is-num">Run</th>
+          <th scope="col" class="is-num">Bytes</th>
+          <th scope="col">PDF sha256</th>
+          <th scope="col">Zip sha256</th>
+          <th scope="col" class="is-num">Pages</th>
+          <th scope="col" class="is-num">Created</th>
+          <th scope="col">Downloads</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pack in packs %}
+        <tr class="ledger-row {% if pack.status == 'COMPLETE' %}ledger-row--ready{% elif pack.status == 'FAILED' %}ledger-row--notready{% else %}ledger-row--watch{% endif %}">
+          <th scope="row" class="is-num">{{ pack.pk }}</th>
+          <td class="nowrap">
+            <span class="badge {% if pack.status == 'COMPLETE' %}badge--ready{% elif pack.status == 'FAILED' %}badge--notready{% else %}badge--watch{% endif %}">
+              {% if pack.status == "COMPLETE" %}<span class="dot dot--ready" aria-hidden="true"></span>{% elif pack.status == "FAILED" %}<span class="dot dot--notready" aria-hidden="true"></span>{% else %}<span class="dot dot--watch" aria-hidden="true"></span>{% endif %}{{ pack.status|title }}
+            </span>
+            {% if pack.failure_reason %}<span class="small">{{ pack.failure_reason }}</span>{% endif %}
+          </td>
+          <td class="is-num">{{ pack.run_id }}</td>
+          <td class="is-num">{{ pack.byte_size|filesizeformat }}</td>
+          <td class="mono small nowrap">{% if pack.pdf_sha256 %}{{ pack.pdf_sha256|slice:":16" }}…{% else %}—{% endif %}</td>
+          <td class="mono small nowrap">{% if pack.csv_zip_sha256 %}{{ pack.csv_zip_sha256|slice:":16" }}…{% else %}—{% endif %}</td>
+          <td class="is-num">{{ pack.page_count|default:"—" }}</td>
+          <td class="is-num nowrap">{{ pack.created_at|date:"Y-m-d H:i" }}</td>
+          <td class="nowrap">
+            {% if pack.status == "COMPLETE" %}
+            <a href="/api/v1/evidence-packs/{{ pack.pk }}/pdf/">PDF</a> ·
+            <a href="/api/v1/evidence-packs/{{ pack.pk }}/zip/">ZIP</a>
+            {% else %}
+            <span class="dash">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="notice">
+    <p class="notice__title">No packs yet.</p>
+    <p class="notice__next">Generate one above — the first pack is the district's first snapshot it can hand to
+      somebody else.</p>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'ledger/packs.js' %}"></script>
+{% endblock %}

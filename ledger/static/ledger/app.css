@@ -1,0 +1,1012 @@
+/* ==========================================================================
+   HydrantProof — components.
+
+   Every value in this file is a token from tokens.css. A raw colour, a raw
+   length or a raw duration here is a defect (DESIGN.md § 10; enforced by
+   tests/test_ui_system.py). The three gradients that exist are declared and
+   named: the offline map graticule, the select caret, the skeleton shimmer.
+
+   Density: dense. Rows are --row-h, controls are --control-h, body is
+   --text-base. Nothing gets a "breathing room" pass — the discipline is
+   cut, not pad.
+   ========================================================================== */
+
+/* --- Base ---------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--fg-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--line-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { margin: 0; font-weight: var(--weight-semibold); line-height: var(--line-snug); }
+p { margin: 0; }
+p + p { margin-top: var(--space-2); }
+
+a { color: var(--accent); text-decoration-thickness: var(--hairline); text-underline-offset: var(--underline-offset); }
+a:hover { color: var(--accent-hover); }
+
+svg { display: block; }
+
+img { max-width: 100%; }
+
+::selection { background: var(--accent-soft); }
+
+/* One focus ring, everywhere. Never `outline: none` without this substitute. */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* --- The skip link: the first tab stop, hidden until it is focused ------- */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: var(--space-3);
+  z-index: var(--z-toast);
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-elevated);
+  color: var(--accent);
+  border: var(--hairline) solid var(--border-default);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transform: translateY(-110%);
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.skip-link:focus {
+  transform: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* --- Shell: one rail, one working column --------------------------------- */
+.shell {
+  display: grid;
+  grid-template-columns: var(--shell-nav) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100vh;
+  padding: var(--space-4) var(--space-3);
+  background: var(--bg-sunken);
+  border-right: var(--hairline) solid var(--border-subtle);
+  overflow-y: auto;
+}
+
+.rail__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  color: var(--fg-primary);
+  text-decoration: none;
+}
+.rail__brand:hover { color: var(--fg-primary); }
+.rail__brand .nav__mark { color: var(--accent); }
+.rail__word {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--track-tight);
+}
+
+.nav { display: flex; flex-direction: column; gap: var(--hairline); }
+
+.nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--fg-secondary);
+  font-size: var(--text-md);
+  text-decoration: none;
+}
+.nav__link:hover { background: var(--bg-raised); color: var(--fg-primary); }
+.nav__link[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--weight-medium);
+}
+.nav__icon { width: var(--icon); height: var(--icon); flex: none; }
+.nav__mark { width: var(--icon-lg); height: var(--icon-lg); flex: none; }
+
+.rail__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: var(--hairline) solid var(--border-subtle);
+}
+.rail__who { display: flex; flex-direction: column; gap: var(--space-1); padding: 0 var(--space-2); }
+.rail__who-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.rail__who-name { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--fg-secondary); }
+.rail__action { display: block; }
+.rail__action .btn { width: 100%; justify-content: flex-start; }
+.rail__action form { margin: 0; }
+
+.shell__body { display: flex; flex-direction: column; min-width: 0; }
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-9);
+}
+.main:focus { outline: none; }
+
+.footer {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6) var(--space-8);
+  border-top: var(--hairline) solid var(--border-subtle);
+  color: var(--fg-tertiary);
+}
+
+/* --- Banners: the page's own status line --------------------------------- */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: var(--hairline) solid var(--border-subtle);
+  font-size: var(--text-base);
+}
+.banner__icon { width: var(--icon); height: var(--icon); flex: none; margin-top: var(--space-1); }
+.banner__body { max-width: var(--measure); }
+.banner__body .btn { margin-top: var(--space-2); }
+
+.banner--sample { background: var(--status-watch-bg); color: var(--fg-primary); }
+.banner--sample .banner__icon { color: var(--status-watch); }
+.banner--stale { background: var(--status-notready-bg); color: var(--fg-primary); }
+.banner--stale .banner__icon { color: var(--status-notready); }
+.banner--info { background: var(--status-info-bg); color: var(--fg-primary); border: var(--hairline) solid var(--status-info-border); border-radius: var(--radius-sm); }
+.banner--info .banner__icon { color: var(--status-info); }
+.banner--ok { background: var(--status-ready-bg); color: var(--fg-primary); border: var(--hairline) solid var(--status-ready-border); border-radius: var(--radius-sm); }
+.banner--ok .banner__icon { color: var(--status-ready); }
+.banner--warn { background: var(--status-watch-bg); color: var(--fg-primary); border: var(--hairline) solid var(--status-watch-border); border-radius: var(--radius-sm); }
+.banner--warn .banner__icon { color: var(--status-watch); }
+.banner--preview { background: var(--accent-soft); color: var(--fg-primary); }
+.banner--preview .banner__icon { color: var(--accent); }
+.banner[hidden] { display: none; }
+
+/* --- Page head: one eyebrow, one title, one sub, actions right ----------- */
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--hairline) solid var(--border-subtle);
+}
+.page-head__text { max-width: var(--measure); }
+.page-head__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.page-head__eyebrow a { color: var(--fg-tertiary); }
+.page-head__eyebrow a:hover { color: var(--accent); }
+.page-head__title {
+  margin-top: var(--space-1);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--track-tighter);
+}
+.page-head__sub { margin-top: var(--space-2); color: var(--fg-secondary); font-size: var(--text-md); }
+.page-head__actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+/* The one choreographed entrance (DESIGN.md § 7): the head leads, in three
+   steps. Transform + opacity only; the reduced-motion block below collapses
+   it to a single frame. */
+@keyframes hp-enter {
+  from { opacity: 0; transform: var(--rise); }
+  to { opacity: 1; transform: none; }
+}
+.page-head__title,
+.page-head__sub,
+.page-head__actions {
+  animation: hp-enter var(--dur-slow) var(--ease-emphasized) both;
+}
+.page-head__sub { animation-delay: var(--stagger-1); }
+.page-head__actions { animation-delay: var(--stagger-2); }
+
+/* --- Grids and stacks ---------------------------------------------------- */
+.grid { display: grid; gap: var(--space-5); grid-template-columns: minmax(0, 1fr); }
+.grid--2 { grid-template-columns: repeat(auto-fit, minmax(var(--field-grow), 1fr)); }
+.grid--wide-left { grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start; }
+.grid--detail { grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start; }
+
+.stack { display: flex; flex-direction: column; gap: var(--space-5); }
+.stack--tight { gap: var(--space-3); }
+
+/* --- Panels -------------------------------------------------------------- */
+.panel {
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--hairline) solid var(--border-subtle);
+  background: var(--bg-raised);
+}
+.panel__title { font-size: var(--text-md); font-weight: var(--weight-semibold); letter-spacing: var(--track-snug); }
+.panel__meta {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--fg-tertiary);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+.panel__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+  background: var(--bg-sunken);
+  border: var(--hairline) solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 0 var(--space-1);
+}
+.panel__body { padding: var(--space-4); }
+.panel__note {
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  border-top: var(--hairline) solid var(--border-subtle);
+  color: var(--fg-tertiary);
+  font-size: var(--text-sm);
+}
+.panel--danger { border-color: var(--status-notready-border); }
+.panel--danger .panel__head { background: var(--status-notready-bg); border-bottom-color: var(--status-notready-border); }
+
+/* The panel's loading composition (DESIGN.md § 6): three .skeleton bars at
+   the real row height, and the panel holds its height while they show so a
+   slow preview cannot make the layout jump. The flow-test result card is the
+   shipped instance (flowtest.js toggles the class around its preview wait). */
+.panel--skeleton .panel__body { min-height: var(--space-10); }
+
+/* --- The property list: label left, value right -------------------------- */
+.props { display: flex; flex-direction: column; }
+.prop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--hairline) solid var(--border-subtle);
+}
+.prop:last-child { border-bottom: 0; }
+.prop__k {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+.prop__v { text-align: right; font-size: var(--text-base); min-width: 0; }
+.prop__v .small { display: block; }
+
+/* --- Notices (the empty state, in one shape) ----------------------------- */
+.notice { padding: var(--space-4); border-bottom: var(--hairline) solid var(--border-subtle); }
+.notice__title { font-weight: var(--weight-medium); }
+.notice__next { margin-top: var(--space-1); color: var(--fg-secondary); font-size: var(--text-sm); }
+
+/* --- Buttons: four variants, six states each ----------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  background: var(--accent);
+  color: var(--accent-on);
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  line-height: var(--line-tight);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-default), color var(--dur-fast) var(--ease-default),
+              border-color var(--dur-fast) var(--ease-default), transform var(--dur-instant) var(--ease-default);
+}
+.btn:hover { background: var(--accent-hover); color: var(--accent-on); }
+.btn:active { background: var(--accent-pressed); transform: var(--press); }
+.btn:disabled, .btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn[aria-busy="true"] { cursor: progress; }
+
+.btn--secondary {
+  background: var(--bg-elevated);
+  color: var(--fg-primary);
+  border-color: var(--border-default);
+}
+.btn--secondary:hover { background: var(--bg-raised); border-color: var(--border-strong); color: var(--fg-primary); }
+.btn--secondary:active { background: var(--bg-sunken); }
+
+.btn--ghost { background: transparent; color: var(--fg-secondary); }
+.btn--ghost:hover { background: var(--bg-raised); color: var(--fg-primary); }
+.btn--ghost:active { background: var(--bg-sunken); }
+
+.btn--danger {
+  background: var(--status-notready-bg);
+  color: var(--status-notready);
+  border-color: var(--status-notready-border);
+}
+.btn--danger:hover { background: var(--status-notready); color: var(--accent-on); }
+
+.btn--sm { min-height: var(--space-6); padding: 0 var(--space-2); font-size: var(--text-sm); }
+
+.btn-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+/* --- Hit zones: the pointer target, generalized from the board's pip -----
+   The drawn control is --control-h; the pointer target is --hit-min. The
+   zone is an invisible overlay on the control itself, never a change to the
+   control's box — density is the product, and a control that grows to
+   satisfy a validator is the anti-default DESIGN.md § 9 forbids. Two
+   anchoring laws, both the pip's (DESIGN.md § 2):
+
+     - a button is centred on its zone: the controls around a button sit in
+       rows and cells with enough surrounding space that the zone cannot
+       reach a neighbouring control's face (the walk measures this on four
+       surfaces);
+     - a stacked link (the rail, the toast dismiss) anchors top-left and
+       extends down: where two zones meet, the later sibling wins and the
+       overlap lies inside the later control's own face, so a control never
+       loses part of its own face to a neighbour.
+
+   The toast dismiss additionally carries a 24 px visual box (WCAG 2.2 AA
+   2.5.8's minimum) because its glyph is otherwise ~10 x 18. */
+.btn, .nav__link, .toast__close { position: relative; }
+.btn::before,
+.nav__link::before,
+.toast__close::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--hit-min);
+}
+.btn::before,
+.toast__close::before {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.nav__link::before { top: 0; }
+
+/* --- Forms --------------------------------------------------------------- */
+.field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.field__label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--fg-secondary); }
+.field__req {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.field__hint { font-size: var(--text-sm); color: var(--fg-tertiary); max-width: var(--measure-tight); }
+.field-row { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(var(--field-min), 1fr)); }
+.field-row + .field-row { margin-top: var(--space-3); }
+
+.input, .select, .textarea {
+  width: 100%;
+  min-height: var(--control-h);
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-elevated);
+  color: var(--fg-primary);
+  border: var(--hairline) solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--line-snug);
+  transition: border-color var(--dur-fast) var(--ease-default), box-shadow var(--dur-fast) var(--ease-default);
+}
+.input:hover, .select:hover, .textarea:hover { border-color: var(--border-strong); }
+.input:focus, .select:focus, .textarea:focus { border-color: var(--border-focus); }
+.input:disabled, .select:disabled, .textarea:disabled {
+  background: var(--bg-sunken);
+  color: var(--fg-disabled);
+  cursor: not-allowed;
+}
+.textarea { padding: var(--space-2); min-height: var(--space-10); resize: vertical; }
+
+.input--num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* The refusal state: a control that a custom rule or the API refused declares
+   its own failed state (aria-invalid) beside the message, never in the
+   message alone. Cleared on edit and on the next success. */
+.input[aria-invalid="true"], .select[aria-invalid="true"], .textarea[aria-invalid="true"] {
+  border-color: var(--status-notready);
+}
+.check input[aria-invalid="true"] {
+  outline: var(--hairline) solid var(--status-notready);
+  outline-offset: var(--space-1);
+}
+
+.select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--fg-tertiary) 50%),
+                    linear-gradient(135deg, var(--fg-tertiary) 50%, transparent 50%);
+  background-position: calc(100% - var(--space-4)) calc(50% + var(--space-1)),
+                       calc(100% - var(--space-3)) calc(50% + var(--space-1));
+  background-size: var(--space-2) var(--space-2);
+  background-repeat: no-repeat;
+  padding-right: var(--space-8);
+}
+
+.check { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-md); }
+.check input { margin-top: var(--space-1); }
+
+fieldset { border: 0; margin: 0; padding: 0; }
+legend { padding: 0; }
+
+form.inline, .inline { display: flex; align-items: flex-end; gap: var(--space-3); flex-wrap: wrap; }
+
+.action-panel { border-bottom: var(--hairline) solid var(--border-subtle); }
+.action-panel__row { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+.action-panel__row .field { flex: 1 1 var(--field-grow); }
+
+.segmented { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.segmented label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: var(--hairline) solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+.segmented label:hover { border-color: var(--border-strong); }
+.segmented label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--weight-medium);
+}
+.segmented input { margin: 0; }
+
+.code-picker { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.code-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--hairline) solid var(--border-default);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.code-picker label:hover { border-color: var(--border-strong); }
+.code-picker label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.code-picker input { margin: 0; }
+/* The refusal state reaches the picker too: the chip is the visible control,
+   so the chip carries the border (the bare checkbox is 13 px of nothing). */
+.code-picker label:has(input[aria-invalid="true"]) { border-color: var(--status-notready); }
+
+/* --- Tables: the ledger's native surface --------------------------------- */
+.table-wrap { overflow-x: auto; contain: layout; }
+
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-base); }
+.table th, .table td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--hairline) solid var(--border-subtle); vertical-align: top; }
+.table thead th {
+  background: var(--bg-sunken);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+.table tbody tr:hover { background: var(--bg-raised); }
+.table tbody tr:last-child th, .table tbody tr:last-child td { border-bottom: 0; }
+.table th[scope="row"] { font-weight: var(--weight-medium); }
+
+/* The resolve cell keeps its working width even when the table must scroll
+   (narrow panels): the note input never crushes below the measure a gloved
+   hand can use. On the dashboard's full-width queue it simply holds the
+   column steady. */
+.resolve-cell { min-width: var(--col-resolve); }
+
+.is-num, .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.num__unit {
+  display: inline-block;
+  margin-left: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--fg-tertiary);
+  white-space: nowrap;
+}
+
+/* The ledger row: a 3px state rail on the first cell, hover lifts nothing. */
+.ledger-row { min-height: var(--row-h); }
+.ledger-row > :first-child {
+  box-shadow: inset var(--rail-w) 0 0 var(--border-strong);
+  padding-left: var(--space-4);
+}
+.ledger-row--ready > :first-child { box-shadow: inset var(--rail-w) 0 0 var(--status-ready-edge); }
+.ledger-row--watch > :first-child { box-shadow: inset var(--rail-w) 0 0 var(--status-watch-edge); }
+.ledger-row--notready > :first-child { box-shadow: inset var(--rail-w) 0 0 var(--status-notready-edge); }
+.ledger-row--none > :first-child { box-shadow: inset var(--rail-w) 0 0 var(--status-neutral-edge); }
+
+/* --- Status: hue + dot + word, never hue alone --------------------------- */
+.dot {
+  display: inline-block;
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: var(--radius-full);
+  background: var(--status-neutral-edge);
+  flex: none;
+}
+.dot--ready { background: var(--status-ready-edge); }
+.dot--watch { background: var(--status-watch-edge); }
+.dot--notready { background: var(--status-notready-edge); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-xs);
+  border: var(--hairline) solid var(--border-subtle);
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge--ready { background: var(--status-ready-bg); border-color: var(--status-ready-border); color: var(--status-ready); }
+.badge--watch { background: var(--status-watch-bg); border-color: var(--status-watch-border); color: var(--status-watch); }
+.badge--notready { background: var(--status-notready-bg); border-color: var(--status-notready-border); color: var(--status-notready); }
+.badge--info { background: var(--status-info-bg); border-color: var(--status-info-border); color: var(--status-info); }
+.badge--quiet { background: var(--bg-sunken); border-color: var(--border-subtle); color: var(--fg-tertiary); }
+
+/* NFPA 291 capacity class chip: the hue is the class, the letter is ink. */
+.class-chip {
+  display: inline-block;
+  min-width: var(--space-5);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+  color: var(--class-ink);
+  background: var(--class-none);
+}
+.class-chip--aa { background: var(--class-aa); }
+.class-chip--a { background: var(--class-a); }
+.class-chip--b { background: var(--class-b); }
+.class-chip--c { background: var(--class-c); }
+.class-chip--none { background: var(--class-none); }
+
+/* --- Flags: the gating vocabulary, always in words ----------------------- */
+.flag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-secondary);
+}
+.flag--warn { color: var(--status-watch); }
+.flag-list { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); }
+
+/* --- Text helpers -------------------------------------------------------- */
+.small { font-size: var(--text-sm); color: var(--fg-secondary); }
+.muted { color: var(--fg-tertiary); }
+.mono { font-family: var(--font-mono); }
+.nowrap { white-space: nowrap; }
+.truncate { max-width: var(--col-rail); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash { color: var(--fg-tertiary); }
+.error { color: var(--status-notready); }
+/* A caution stated in words may carry the watch hue as well — a class, never
+   an inline style, so the cascade (and a theme flip) still owns the value. */
+.warn { color: var(--status-watch); }
+.visually-hidden {
+  position: absolute;
+  width: var(--hairline);
+  height: var(--hairline);
+  margin: calc(var(--hairline) * -1);
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- The readiness board: a mosaic, not a control grid ------------------- */
+.board-wrap { padding: var(--space-4); }
+.board { display: flex; flex-wrap: wrap; gap: var(--pip-gap); }
+.board__pip {
+  position: relative;
+  display: block;
+  width: var(--pip);
+  height: var(--pip);
+  border-radius: var(--radius-xs);
+  background: var(--status-neutral-edge);
+  transition: transform var(--dur-fast) var(--ease-default), box-shadow var(--dur-fast) var(--ease-default);
+}
+.board__pip--ready { background: var(--status-ready-edge); }
+.board__pip--watch { background: var(--status-watch-edge); }
+.board__pip--notready { background: var(--status-notready-edge); }
+.board__pip--none { background: var(--status-neutral-edge); }
+.board__pip:hover { transform: var(--lift); box-shadow: var(--shadow-1); }
+/* The pointer target: 24 px anchored to the square's top-left, so a square
+   never loses part of its own face to a neighbour's zone. */
+.board__pip::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--hit-pad);
+  height: var(--hit-pad);
+}
+.board__readout {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--fg-tertiary);
+  min-height: var(--space-5);
+}
+.board__readout--active { color: var(--fg-primary); font-weight: var(--weight-medium); }
+
+.board-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); list-style: none; margin: 0; padding: 0 var(--space-4) var(--space-3); }
+.board-legend__item { display: flex; align-items: baseline; gap: var(--space-2); }
+.board-legend__token {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--track-label);
+  color: var(--fg-secondary);
+}
+.board-legend__count { font-family: var(--font-mono); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+.board-legend__token::before {
+  content: "";
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: var(--radius-full);
+  background: var(--status-neutral-edge);
+}
+.board-legend__item--ready .board-legend__token::before { background: var(--status-ready-edge); }
+.board-legend__item--watch .board-legend__token::before { background: var(--status-watch-edge); }
+.board-legend__item--notready .board-legend__token::before { background: var(--status-notready-edge); }
+
+/* The one proportion bar: a single stacked reading, never three KPI cards. */
+.bar { display: flex; height: var(--bar-h); border-radius: var(--radius-pill); overflow: hidden; background: var(--bg-sunken); }
+.bar__seg { height: 100%; }
+.bar__seg--ready { background: var(--status-ready-edge); }
+.bar__seg--watch { background: var(--status-watch-edge); }
+.bar__seg--notready { background: var(--status-notready-edge); }
+.bar__seg--none { background: var(--status-neutral-edge); }
+
+/* --- The computed-result card (flow test) -------------------------------- */
+.readout { display: flex; flex-direction: column; gap: var(--space-2); }
+.readout--empty { color: var(--fg-secondary); }
+.readout__row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.readout__label {
+  font-size: var(--text-xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+.readout__big {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--track-tightest);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-tight);
+}
+.readout__unit { margin-left: var(--space-2); font-size: var(--text-sm); font-weight: var(--weight-regular); color: var(--fg-tertiary); letter-spacing: var(--track-label); }
+.readout-card .readout__row:first-child { align-items: flex-start; }
+
+.class-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-7);
+  height: var(--space-7);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  border: var(--hairline) solid var(--border-strong);
+  background: var(--class-none);
+  color: var(--class-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+.class-mark--aa { background: var(--class-aa); }
+.class-mark--a { background: var(--class-a); }
+.class-mark--b { background: var(--class-b); }
+.class-mark--c { background: var(--class-c); }
+.class-mark--none { background: var(--class-none); }
+
+/* --- The outlet grid ----------------------------------------------------- */
+.outlet-grid { display: flex; flex-direction: column; gap: var(--space-2); }
+.outlet-row {
+  display: grid;
+  grid-template-columns: var(--space-6) repeat(auto-fit, minmax(var(--field-min), 1fr)) auto auto;
+  align-items: end;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: var(--hairline) solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+}
+.outlet-row__n {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--fg-tertiary);
+  text-align: center;
+  padding-bottom: var(--space-2);
+}
+.outlet-row__computed {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: var(--space-2);
+  min-width: var(--space-9);
+  text-align: right;
+}
+
+/* --- Dropzone ------------------------------------------------------------ */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--hairline) dashed var(--border-default);
+  border-radius: var(--radius-sm);
+}
+.dropzone__list { display: flex; flex-direction: column; gap: var(--space-1); }
+
+/* --- Maps ---------------------------------------------------------------- */
+.map-shell { position: relative; }
+.map {
+  height: var(--map-h);
+  border: var(--hairline) solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+.map--graticule {
+  background-image: linear-gradient(to right, var(--border-subtle) var(--hairline), transparent var(--hairline)),
+                    linear-gradient(to bottom, var(--border-subtle) var(--hairline), transparent var(--hairline));
+  background-size: var(--space-8) var(--space-8);
+}
+.map-notice {
+  padding: var(--space-2) var(--space-3);
+  background: var(--status-watch-bg);
+  border: var(--hairline) solid var(--status-watch-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--fg-primary);
+}
+/* The map's proof layers take their hue from the cascade, so a theme flip
+   repaints them like every other surface. Leaflet also writes its color option
+   onto the path as a presentation attribute; a stylesheet rule outranks that
+   attribute, so the value below is the one that renders, in both themes. */
+#map .credit-ring { stroke: var(--accent); }
+#map .hydrant-marker { stroke: var(--accent); }
+#pin-map .ref-marker { stroke: var(--status-neutral-edge); }
+
+/* --- Toasts -------------------------------------------------------------- */
+.toast-stack {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: var(--col-rail);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-default);
+  border-left: var(--rail-w) solid var(--accent);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-3);
+  font-size: var(--text-md);
+}
+.toast--ok { border-left-color: var(--status-ready-edge); }
+.toast--bad { border-left-color: var(--status-notready-edge); }
+.toast--info { border-left-color: var(--status-info); }
+.toast__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-6);
+  min-height: var(--space-6);
+  margin-left: auto;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--fg-tertiary);
+  font-size: var(--text-lg);
+  line-height: var(--line-tight);
+  cursor: pointer;
+}
+.toast__close:hover { color: var(--fg-primary); }
+
+/* --- The confirm dialog -------------------------------------------------- */
+.modal { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: var(--space-4); }
+.modal[hidden] { display: none; }
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: saturate(180%) blur(var(--space-2));
+}
+.modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--modal-w);
+  padding: var(--space-5);
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-4);
+}
+.modal__title { font-size: var(--text-xl); letter-spacing: var(--track-tight); }
+.modal__body { margin-top: var(--space-2); color: var(--fg-secondary); }
+.modal__actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-5); }
+
+/* --- Skeletons: the shape of the content, never an anonymous wheel ------- */
+.skeleton {
+  position: relative;
+  display: block;
+  height: var(--skeleton-h);
+  background: var(--bg-sunken);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+.skeleton--title { width: var(--width-short); height: var(--text-lg); }
+.skeleton--text { width: 100%; }
+.skeleton--short { width: var(--width-short); }
+.skeleton + .skeleton { margin-top: var(--space-2); }
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, var(--bg-raised) 50%, transparent 100%);
+  transform: translateX(calc(var(--shift) * -1));
+  animation: hp-shimmer var(--dur-shimmer) var(--ease-default) infinite;
+}
+@keyframes hp-shimmer {
+  to { transform: translateX(var(--shift)); }
+}
+
+/* --- Login --------------------------------------------------------------- */
+.login-body { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg-base); }
+.login-shell { flex: 1; display: grid; place-items: center; padding: var(--space-6); }
+.login-card {
+  width: 100%;
+  max-width: var(--col-rail);
+  padding: var(--space-6);
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+}
+.login-card__mark { color: var(--accent); width: var(--space-7); height: var(--space-7); }
+.login-card__title { margin-top: var(--space-3); font-size: var(--text-2xl); letter-spacing: var(--track-tighter); }
+.login-card__sub { margin-top: var(--space-2); color: var(--fg-secondary); font-size: var(--text-md); }
+.login-card form { margin-top: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+.login-card .btn { width: 100%; margin-top: var(--space-1); }
+.login-card .error { padding: var(--space-2) var(--space-3); background: var(--status-notready-bg); border: var(--hairline) solid var(--status-notready-border); border-radius: var(--radius-sm); font-size: var(--text-md); }
+.login-note {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+.login-note[hidden] { display: none; }
+.login-foot { padding: var(--space-5) var(--space-6); color: var(--fg-tertiary); }
+
+/* --- Responsive: the rail folds into a strip, the columns stack ---------- */
+@media (max-width: 62em) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail {
+    position: static;
+    height: auto;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-right: 0;
+    border-bottom: var(--hairline) solid var(--border-subtle);
+  }
+  .nav { flex-direction: row; overflow-x: auto; }
+  .nav__link { white-space: nowrap; }
+  .rail__foot { flex-direction: row; align-items: center; margin-top: 0; padding-top: 0; border-top: 0; }
+  .rail__who { flex-direction: row; align-items: baseline; gap: var(--space-2); }
+  .rail__action .btn { width: auto; }
+  .grid--wide-left, .grid--detail { grid-template-columns: minmax(0, 1fr); }
+  .main { padding: var(--space-4) var(--space-4) var(--space-8); }
+}
+
+@media (max-width: 40em) {
+  .main { padding: var(--space-3) var(--space-3) var(--space-7); }
+  .page-head { align-items: flex-start; }
+  .field-row { grid-template-columns: minmax(0, 1fr); }
+  .outlet-row { grid-template-columns: var(--space-6) minmax(0, 1fr); }
+  .outlet-row__computed { grid-column: 2; text-align: left; }
+  .input, .select, .textarea { font-size: var(--text-input-mobile); }
+  .truncate { max-width: var(--measure-tight); }
+  .toast-stack { left: var(--space-3); right: var(--space-3); max-width: none; }
+}
+
+/* --- Motion: honour the operator's preference ---------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: var(--dur-none) !important;
+    animation-delay: var(--dur-none) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--dur-none) !important;
+  }
+  .skip-link { transition: none; }
+}
+
+/* --- Print: the worksheet and the ledger leave the screen ---------------- */
+@media print {
+  .rail, .skip-link, .toast-stack, .modal, .btn-row, .page-head__actions, .board-wrap { display: none; }
+  .shell { display: block; }
+  .main { max-width: none; padding: 0; }
+  .panel { border-color: var(--border-strong); box-shadow: var(--shadow-0); break-inside: avoid; }
+  .table thead th { position: static; }
+  body { font-size: var(--text-sm); }
+}

@@ -1,0 +1,4 @@
+# HydrantProof — development/test dependencies only (exact pins).
+# Pillow is a runtime dependency and lives only in requirements.txt.
+pytest==9.1.1
+pytest-django==4.14.0

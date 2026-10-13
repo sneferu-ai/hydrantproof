@@ -1,0 +1,115 @@
+{% extends "ledger/base.html" %}
+{% load ui %}
+{% block title %}{{ parcel.parcel_id }} — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Protected parcel</p>
+    <h1 class="page-head__title">{{ parcel.parcel_id }}</h1>
+    <p class="page-head__sub">
+      {{ parcel.address|default:"No address recorded" }} ·
+      {% if parcel.structure_lat is not None %}
+        structure point {{ parcel.structure_lat|floatformat:5 }}, {{ parcel.structure_lon|floatformat:5 }} (override)
+      {% else %}
+        centroid {{ parcel.lat|floatformat:5 }}, {{ parcel.lon|floatformat:5 }} (proxy)
+      {% endif %}
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="/parcels/{{ parcel.pk }}/edit/">Edit parcel</a>
+    <a class="btn btn--ghost" href="/parcels/">Back to parcels</a>
+  </div>
+</div>
+
+<div class="grid grid--detail">
+  <div class="stack">
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Hydrants in radius</h2>
+        <span class="panel__count">{{ results|length }}</span>
+        <span class="panel__meta">
+          {% if latest_run %}coverage run #{{ latest_run.pk }} · {{ latest_run.credit_radius_ft|floatformat:"0" }} ft
+          {% else %}no completed run{% endif %}
+        </span>
+      </div>
+      {% if results %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Hydrant</th>
+              <th scope="col" class="is-num">Distance</th>
+              <th scope="col">District credited</th>
+              <th scope="col" class="is-num">Credited flow</th>
+              <th scope="col">Exclusion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for result in results %}
+            <tr class="ledger-row {% if result.district_credited %}ledger-row--ready{% else %}ledger-row--none{% endif %}">
+              <th scope="row" class="nowrap">
+                {% if result.hydrant_id %}<a href="/hydrants/{{ result.hydrant_id }}/">{{ result.hydrant.asset_tag }}</a>
+                {% else %}<span class="muted">No hydrant inside the radius</span>{% endif %}
+              </th>
+              <td class="is-num">{{ result.distance_ft|floatformat:1 }}<span class="num__unit">ft</span></td>
+              <td>{% if result.district_credited %}<span class="badge badge--ready"><span class="dot dot--ready" aria-hidden="true"></span>Credited</span>{% else %}<span class="badge badge--quiet">Excluded</span>{% endif %}</td>
+              <td class="is-num">{% if result.district_credited_gpm %}{{ result.district_credited_gpm|gpm:1 }}<span class="num__unit">gpm</span>{% else %}<span class="dash">—</span>{% endif %}</td>
+              <td class="mono small">{{ result.exclusion_code|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="panel__note">
+        Distances are shown rounded to 0.1 ft; inclusion was decided on the unrounded value. Exclusion codes
+        follow one precedence order, so a hydrant shows the first reason that applies.
+      </p>
+      {% elif latest_run %}
+      <div class="notice">
+        <p class="notice__title">No hydrant is inside the credit radius of this parcel.</p>
+        <p class="notice__next">Run #{{ latest_run.pk }} enumerated the pair and found nothing within
+          {{ latest_run.credit_radius_ft|floatformat:"0" }} ft. If the parcel's centroid is a poor proxy,
+          <a href="/parcels/{{ parcel.pk }}/edit/">set the structure override</a> and recompute coverage.</p>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">No completed coverage run yet.</p>
+        <p class="notice__next"><a href="/coverage/">Run the worksheet</a> to enumerate every hydrant within
+          the district credit radius of this parcel.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <div class="banner banner--info" role="status">
+      {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+      <div class="banner__body"><strong>How a hydrant earns credit here.</strong> {{ centroid_note }}</div>
+    </div>
+  </div>
+
+  <aside class="stack">
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Properties</h2></div>
+      <div class="props">
+        <div class="prop"><span class="prop__k">Parcel id</span><span class="prop__v mono">{{ parcel.parcel_id }}</span></div>
+        <div class="prop"><span class="prop__k">Address</span><span class="prop__v">{{ parcel.address|default:"—" }}</span></div>
+        <div class="prop"><span class="prop__k">Centroid</span><span class="prop__v mono">{{ parcel.lat|floatformat:6 }}, {{ parcel.lon|floatformat:6 }}</span></div>
+        <div class="prop"><span class="prop__k">Structure point</span><span class="prop__v mono">{% if parcel.structure_lat is not None %}{{ parcel.structure_lat|floatformat:6 }}, {{ parcel.structure_lon|floatformat:6 }}{% else %}<span class="dash">—</span>{% endif %}</span></div>
+        <div class="prop"><span class="prop__k">Point used</span><span class="prop__v mono">{{ parcel.point.0|floatformat:6 }}, {{ parcel.point.1|floatformat:6 }}</span></div>
+        <div class="prop"><span class="prop__k">Protected structure</span><span class="prop__v">{% if parcel.is_protected_structure %}Yes{% else %}No{% endif %}</span></div>
+        <div class="prop"><span class="prop__k">Structure type</span><span class="prop__v">{{ parcel.structure_type|default:"—" }}</span></div>
+        <div class="prop"><span class="prop__k">Source</span><span class="prop__v">{{ parcel.source|default:"—" }}</span></div>
+        <div class="prop"><span class="prop__k">Source organization</span><span class="prop__v">{{ parcel.source_org|default:"—" }}</span></div>
+        <div class="prop"><span class="prop__k">Record id</span><span class="prop__v mono">{{ parcel.pk }}</span></div>
+      </div>
+      <p class="panel__note">
+        <a href="/parcels/{{ parcel.pk }}/edit/">Edit this parcel</a> — the change is a
+        <span class="mono">PATCH</span> on <span class="mono">/api/v1/parcels/{{ parcel.pk }}/</span>, written
+        to the parcel attribute history. Saving does not move the worksheet: coverage is a frozen run and
+        is recomputed from <a href="/coverage/">the worksheet page</a>.
+      </p>
+    </section>
+  </aside>
+</div>
+
+{% endblock %}

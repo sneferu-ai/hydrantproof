@@ -1,0 +1,158 @@
+{% extends "ledger/base.html" %}
+{% load ui %}
+{% block title %}How it works — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Reference</p>
+    <h1 class="page-head__title">How HydrantProof works</h1>
+    <p class="page-head__sub">
+      Five jobs, one refusal, and the exact vocabulary every screen uses. Everything on this page is read from the
+      same constants the engine runs on — it is a reference, not a description that can drift.
+    </p>
+  </div>
+</div>
+
+<div class="grid grid--2">
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">The five jobs</h2></div>
+    <div class="panel__body">
+      <p class="small"><strong>1 · Registry.</strong> Every hydrant with its attributes, its provenance and a
+        three-state service lifecycle, plus an append-only status log that names who changed it and why.
+        <a href="/hydrants/">Open the registry</a>.</p>
+      <p class="small"><strong>2 · Ledger.</strong> NFPA 291 flow tests: static, residual, per-outlet pitot
+        readings, an optional meter total. The server computes the discharge and the rated flow at
+        {{ target_residual_psi|floatformat:0 }} psi residual, stamps the formula version, and keeps full history
+        with supersession-based corrections.</p>
+      <p class="small"><strong>3 · Inspections and deficiencies.</strong> Append-only inspections on their own
+        recency window. A <span class="mono">FAIL</span> opens one gating row per code; a later
+        <span class="mono">OK</span> closes every open row transactionally.</p>
+      <p class="small"><strong>4 · Readiness.</strong> The three states below, plus information-level attention
+        flags, ranked overdue lists, out-of-service expiry with acknowledgement, and a notification outbox.</p>
+      <p class="small"><strong>5 · Water-supply worksheet.</strong> For each protected parcel, every hydrant inside
+        {{ credit_radius_ft|floatformat:0 }} ft with its credited contribution or its explicit exclusion reason,
+        and one click to an evidence pack.
+        <a href="/coverage/">Open the worksheet</a>.</p>
+    </div>
+  </section>
+
+  <section class="panel panel--danger">
+    <div class="panel__head"><h2 class="panel__title">The one refusal</h2></div>
+    <div class="panel__body">
+      <p class="small"><strong>HydrantProof does not predict a Public Protection Classification and does not
+        compute FSRS point values.</strong> ISO (Verisk) assigns classifications under a licensed, copyrighted
+        schedule this product cannot quote or encode.</p>
+      <p class="small">What the district gets instead: complete worksheet inputs, ranked gaps, and a neutral
+        readiness profile organised the way the public FSRS water-supply section is structured. No points are
+        computed anywhere in this product.</p>
+      <p class="small muted">{{ gap_disclaimer }}</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Readiness, exactly</h2><span class="panel__meta">engine vocabulary</span></div>
+    <div class="props">
+      <div class="prop">
+        <span class="prop__k"><span class="dot dot--ready" aria-hidden="true"></span> READY</span>
+        <span class="prop__v">In service, tested and inspected inside their windows, no open gating deficiency.</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k"><span class="dot dot--watch" aria-hidden="true"></span> WATCH</span>
+        <span class="prop__v">Degrading flow, a window closing, or a non-gating deficiency. Never gates credit.</span>
+      </div>
+      <div class="prop">
+        <span class="prop__k"><span class="dot dot--notready" aria-hidden="true"></span> NOT_READY</span>
+        <span class="prop__v">At least one gating flag applies. The flag is always named beside the state.</span>
+      </div>
+    </div>
+    <p class="panel__note">
+      Gating flags, in the order they are reported: {{ gating_flags|join:" · " }}.
+      Attention flags — information only, they never gate credit: {{ attention_flags|join:" · " }}.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Recency and windows</h2><span class="panel__meta">district policy, frozen per run</span></div>
+    <div class="props">
+      <div class="prop"><span class="prop__k">Flow-test recency</span><span class="prop__v num">{{ district.recency_days }}<span class="num__unit">days</span></span></div>
+      <div class="prop"><span class="prop__k">Flow-test due-soon</span><span class="prop__v num">{{ district.due_soon_days }}<span class="num__unit">days</span></span></div>
+      <div class="prop"><span class="prop__k">Inspection recency</span><span class="prop__v num">{{ district.inspection_recency_days }}<span class="num__unit">days</span></span></div>
+      <div class="prop"><span class="prop__k">Inspection due-soon</span><span class="prop__v num">{{ district.inspection_due_soon_days }}<span class="num__unit">days</span></span></div>
+      <div class="prop"><span class="prop__k">Credit radius</span><span class="prop__v num">{{ district.credit_radius_ft|floatformat:0 }}<span class="num__unit">ft</span></span></div>
+      <div class="prop"><span class="prop__k">Sub-target residual</span><span class="prop__v">{% if district.exclude_residual_below_target %}Excluded from credit{% else %}Credited (default){% endif %}</span></div>
+    </div>
+    <p class="panel__note">
+      A test is <span class="mono">CURRENT</span>, <span class="mono">DUE_SOON</span> or
+      <span class="mono">OVERDUE</span>; a hydrant that has never been tested is
+      <span class="mono">UNTESTED</span>, which is not the same thing as overdue. Inspections age on their own
+      cadence. <a href="/settings/">See every district value</a>.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">How a hydrant earns district credit</h2></div>
+    <div class="panel__body">
+      <p class="small">For a protected parcel, every hydrant inside the credit radius is a candidate. One
+        exclusion reason is reported per pair — the first that applies, in this order:</p>
+      <p class="mono small">{{ exclusion_precedence|join:" → " }}</p>
+      <p class="small">A credited hydrant contributes its rated flow at
+        {{ target_residual_psi|floatformat:0 }} psi residual. The headline metric is
+        <strong>distribution</strong> — the count of credited hydrants per parcel (3+ / 2 / 1 / 0) — and the
+        summed flow band is printed as an explicitly labelled
+        <em>{{ flow_band_label }}</em>.</p>
+      <p class="small muted">{{ centroid_note }} {{ subtarget_note }}</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Proof posture — stated plainly</h2></div>
+    <div class="panel__body">
+      <p class="small">HydrantProof's proof is <strong>proof of records</strong> — attributed, append-only,
+        versioned, reproducible — <strong>not proof of physical presence</strong>. The capture page records browser
+        geolocation with its accuracy, a client capture timestamp and photo metadata, but nothing in this version
+        attests that a person stood at the hydrant.</p>
+      <p class="small">Queued field submissions are idempotent by <span class="mono">client_uuid</span>, not
+        cryptographically signed. Every artifact is labelled:
+        <em>{{ artifact_label }}</em></p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Deficiency codes</h2><span class="panel__meta">one row per code</span></div>
+    <div class="panel__body">
+      <p class="mono small">{{ deficiency_codes|join:" · " }}</p>
+      <p class="small">A <span class="mono">FAIL</span> inspection opens a gating row per code; a
+        <span class="mono">DEFICIENCY</span> opens the same rows without gating credit. Editors resolve rows
+        manually with a note; an <span class="mono">OK</span> inspection closes every open row on the hydrant
+        automatically. The <span class="mono">Deficiency</span> table is the single source of truth.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Where everything lives</h2></div>
+    <div class="props">
+      <div class="prop"><span class="prop__k">Today's picture</span><span class="prop__v"><a href="/dashboard/">Readiness board</a></span></div>
+      <div class="prop"><span class="prop__k">Hydrants</span><span class="prop__v"><a href="/hydrants/">Registry</a> · <a href="/hydrants/new/">add one</a></span></div>
+      <div class="prop"><span class="prop__k">Protected parcels</span><span class="prop__v"><a href="/parcels/">Parcel register</a></span></div>
+      <div class="prop"><span class="prop__k">Worksheet</span><span class="prop__v"><a href="/coverage/">Coverage run</a></span></div>
+      <div class="prop"><span class="prop__k">Evidence</span><span class="prop__v"><a href="/packs/">Evidence packs</a></span></div>
+      <div class="prop"><span class="prop__k">Paper and interchange</span><span class="prop__v"><a href="/exports/">Exports and forms</a></span></div>
+      <div class="prop"><span class="prop__k">At the hydrant</span><span class="prop__v"><a href="/field/">Capture readings</a></span></div>
+      <div class="prop"><span class="prop__k">Configuration</span><span class="prop__v"><a href="/settings/">District settings</a></span></div>
+      <div class="prop"><span class="prop__k">Map overlay</span><span class="prop__v"><span class="mono">POST /api/v1/overlays/</span> — an <span class="mono">editor</span> upload replaces the active overlay; <span class="mono">DELETE /api/v1/overlays/{id}/</span> removes it</span></div>
+      <div class="prop"><span class="prop__k">Scripting</span><span class="prop__v"><a href="/openapi.json">OpenAPI 3.0.3 schema</a></span></div>
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel__head"><h2 class="panel__title">What every artifact says about itself</h2></div>
+  <div class="panel__body">
+    <p class="small">{{ disclaimer }}</p>
+    <p class="small muted">{{ provisional_banner }}</p>
+  </div>
+</section>
+
+{% endblock %}

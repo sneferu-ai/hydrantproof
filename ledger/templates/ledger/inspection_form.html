@@ -1,0 +1,194 @@
+{% extends "ledger/base.html" %}
+{% load static ui %}
+{% block title %}Inspection — {{ hydrant.asset_tag }} — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Inspection · <a href="/hydrants/{{ hydrant.pk }}/">{{ hydrant.asset_tag }}</a></p>
+    <h1 class="page-head__title">Record an inspection</h1>
+    <p class="page-head__sub">
+      {{ hydrant.location_description|default:"No location description recorded" }} ·
+      currently {{ derived.readiness|readiness_label }} with
+      {{ open_deficiencies|length }} open deficienc{{ open_deficiencies|length|pluralize:"y,ies" }}.
+      An inspection is append-only: it is a record of what was found, and it can open or close deficiency rows.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--ghost" href="/hydrants/{{ hydrant.pk }}/">Cancel</a>
+  </div>
+</div>
+
+{% if not can_write %}
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Your role is read-only.</strong> Recording an inspection needs the
+    <span class="mono">editor</span> role or above; the controls below are disabled.
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid--wide-left">
+  <form class="stack" id="inspection-form" method="post"
+        action="/api/v1/hydrants/{{ hydrant.pk }}/inspections/"
+        data-hydrant-id="{{ hydrant.pk }}" novalidate>
+    {% csrf_token %}
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Result</h2><span class="panel__meta">this decides what opens</span></div>
+      <div class="panel__body">
+        <fieldset class="stack stack--tight">
+          <legend class="field__label">What did the inspector find?</legend>
+          <div class="segmented" role="radiogroup" aria-label="Inspection result">
+            <label>
+              <input type="radio" name="result" value="OK" checked {% if not can_write %}disabled{% endif %}>
+              <span>OK — nothing found</span>
+            </label>
+            <label>
+              <input type="radio" name="result" value="DEFICIENCY" {% if not can_write %}disabled{% endif %}>
+              <span>Deficiency — non-gating</span>
+            </label>
+            <label>
+              <input type="radio" name="result" value="FAIL" {% if not can_write %}disabled{% endif %}>
+              <span>Fail — gates credit</span>
+            </label>
+          </div>
+          <p class="field__hint" id="result-explainer"></p>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Deficiency codes</h2>
+        <span class="panel__meta">one row per code</span>
+      </div>
+      <div class="panel__body">
+        <fieldset class="stack stack--tight" id="code-fieldset">
+          <legend class="field__label">Codes found</legend>
+          <div class="code-picker">
+            {% for code in deficiency_codes %}
+            <label>
+              <input type="checkbox" name="deficiency_codes" value="{{ code }}" {% if not can_write %}disabled{% endif %}>
+              <span>{{ code }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <p class="field__hint" id="codes-explainer">
+            Codes are only read when the result is <span class="mono">DEFICIENCY</span> or
+            <span class="mono">FAIL</span>. A <span class="mono">FAIL</span> opens one gating row per code;
+            a <span class="mono">DEFICIENCY</span> opens the same rows without gating credit.
+          </p>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Who and when</h2></div>
+      <div class="panel__body">
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="inspected_on">Inspected on</label>
+            <input class="input" type="date" id="inspected_on" name="inspected_on"
+                   value="{{ today|date:'Y-m-d' }}" required {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="inspector_names">Inspector <span class="field__req">optional</span></label>
+            <input class="input" id="inspector_names" name="inspector_names" maxlength="255"
+                   placeholder="Who walked the hydrant" {% if not can_write %}disabled{% endif %}>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="notes">Notes <span class="field__req">optional</span></label>
+          <textarea class="textarea" id="notes" name="notes" rows="3"
+                    placeholder="What was seen, and what was done about it"
+                    {% if not can_write %}disabled{% endif %}></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Photos</h2><span class="panel__meta">up to 4</span></div>
+      <div class="panel__body">
+        <div class="dropzone">
+          <label class="field__label" for="photos">Attach photos of the finding</label>
+          <input type="file" id="photos" name="photos" accept="image/jpeg,image/png,image/webp" multiple
+                 {% if not can_write %}disabled{% endif %}>
+          <p class="field__hint">JPEG, PNG or WebP, ≤ 5 MB each. Re-encoded to JPEG at ≤ 1600 px, EXIF stripped
+            after the capture timestamp is read.</p>
+          <div class="dropzone__list" id="photo-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="btn-row" id="form-actions">
+      <button type="submit" class="btn" id="submit-inspection"{% if sample_data_banner %} data-confirm="Recording a real (non-sample) row deactivates every published demo account in the same transaction. That is the product&rsquo;s design: a published password must never guard real data. Continue?" data-confirm-title="This writes the district&rsquo;s first real record" data-confirm-accept="Record and deactivate demo accounts" data-confirm-danger="true"{% endif %}
+              {% if not can_write %}disabled aria-disabled="true" title="Read-only role"{% endif %}>
+        Record inspection
+      </button>
+      <a class="btn btn--ghost" href="/hydrants/{{ hydrant.pk }}/">Cancel</a>
+      <span class="small" id="submit-status" role="status"></span>
+    </div>
+
+    <div id="success-panel" hidden></div>
+  </form>
+
+  <aside class="stack">
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Open on this hydrant</h2><span class="panel__count">{{ open_deficiencies|length }}</span></div>
+      {% if open_deficiencies %}
+      <div class="props">
+        {% for deficiency in open_deficiencies %}
+        <div class="prop">
+          <span class="prop__k mono">{{ deficiency.category }}</span>
+          <span class="prop__v">
+            {% if deficiency.gates_credit %}<span class="badge badge--notready"><span class="dot dot--notready" aria-hidden="true"></span>Gating</span>
+            {% else %}<span class="badge badge--quiet">Non-gating</span>{% endif %}
+            <span class="small">opened {{ deficiency.opened_at|date:"Y-m-d" }}</span>
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">Nothing open on this hydrant.</p>
+        <p class="notice__next">A <span class="mono">FAIL</span> here would open gating rows for the codes you
+          tick; an <span class="mono">OK</span> would close any that exist.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Recent inspections</h2></div>
+      {% if recent_inspections %}
+      <div class="props">
+        {% for inspection in recent_inspections %}
+        <div class="prop">
+          <span class="prop__k">{{ inspection.inspected_on }}</span>
+          <span class="prop__v">
+            <span class="badge {% if inspection.result == 'FAIL' %}badge--notready{% elif inspection.result == 'DEFICIENCY' %}badge--watch{% else %}badge--ready{% endif %}">{{ inspection.result|result_label }}</span>
+            <span class="small">{{ inspection.deficiency_codes|join:", "|default:"no codes" }}</span>
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="panel__body"><p class="muted">No inspection recorded yet.</p></div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">What happens on submit</h2></div>
+      <div class="panel__body">
+        <p class="small">The inspection row is written first, then one deficiency row per ticked code, in the same
+          transaction. Nothing here can edit a flow test or a previous inspection — the ledger is append-only.</p>
+      </div>
+    </section>
+  </aside>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'ledger/inspection.js' %}"></script>
+{% endblock %}

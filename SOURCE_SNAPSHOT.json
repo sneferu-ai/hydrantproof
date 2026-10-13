@@ -1,0 +1,1033 @@
+{
+  "schema": "sneferu.public-works.source-showcase/v1",
+  "project_id": "3d5483f9-0c86-57fb-a694-1e66268e7187",
+  "build_run_id": "2026-10-05T13-07-02Z-task-38e150a9",
+  "captured_at": "2026-10-11T23:36:21.833606+00:00",
+  "source_tree_sha256": "113484138579e1308b9dd92e8bc97d8012518dd202abbfc482efd8412c155d24",
+  "source_archive_sha256": "94e8362a49190b76110870be4078a7ca93e56eac5c41d486856c37287130216d",
+  "kind": "source_snapshot",
+  "accepted_release": false,
+  "notice": "Filtered frozen application source. This showcase is not a newly qualified release. Application code is unchanged; README and showcase presentation are additional. Original README preserved in README.generated.md.",
+  "files": [
+    {
+      "mode": "0644",
+      "path": ".dockerignore",
+      "sha256": "9fdacea01ff639c85b430ad08cb31e6dca590903c39305564fa8283a260b4301",
+      "size_bytes": 539
+    },
+    {
+      "mode": "0644",
+      "path": ".gitignore",
+      "sha256": "43093fe6e67bb0df847b1c96a624c08c848c0bb5eae5ff281d0b6d99493e626e",
+      "size_bytes": 1433
+    },
+    {
+      "mode": "0644",
+      "path": "DESIGN.md",
+      "sha256": "f5f07dd2b778dc39af74d7034a93f47a6ca9ea3c4b25df78e1689dc99b4b23fe",
+      "size_bytes": 25711
+    },
+    {
+      "mode": "0644",
+      "path": "Dockerfile",
+      "sha256": "4deb1943c9d3006cf04be5becafbe1ace7995eff2819d9f98a49bf7c3d6663a1",
+      "size_bytes": 2029
+    },
+    {
+      "mode": "0644",
+      "path": "LICENSE",
+      "sha256": "1497cc12c106769199c0c4d8925219288b18b7a3270b97e0643c40089ac9361e",
+      "size_bytes": 1088
+    },
+    {
+      "mode": "0644",
+      "path": "MANIFEST.in",
+      "sha256": "8dd8fb536d78f0a0b4710d518928e04ea575f031fb84ca4fcb95911eeb08c369",
+      "size_bytes": 1009
+    },
+    {
+      "mode": "0644",
+      "path": "README.md",
+      "sha256": "cf99ba0bfc50f6b17a2fa3d97a071ca9e7b522efee436b4fa85fa6e62ca2fdd2",
+      "size_bytes": 24129
+    },
+    {
+      "mode": "0644",
+      "path": "SOUL.md",
+      "sha256": "847eeb00b90b655119aecb68d6242241258aeb724cad14afaa910071e49638a7",
+      "size_bytes": 3155
+    },
+    {
+      "mode": "0755",
+      "path": "entrypoint.sh",
+      "sha256": "109cf0b4ce59f10fe11506aa847273298eee9fd678cda0005e6ae149f31566c5",
+      "size_bytes": 4775
+    },
+    {
+      "mode": "0644",
+      "path": "manage.py",
+      "sha256": "c41ed6b17a122d2d89d66ab3766d3855968d7c0c8165779a4d7a6a14a6630f19",
+      "size_bytes": 672
+    },
+    {
+      "mode": "0644",
+      "path": "packaging.json",
+      "sha256": "83a40b75bd48ba18d36072d223e64e8ab23eb5b5d9bddd7a9bd510e8852a89b3",
+      "size_bytes": 927
+    },
+    {
+      "mode": "0644",
+      "path": "pytest.ini",
+      "sha256": "1985d744b3a710e5da261f9f4e579fb60b19a66da1af0b2df1c05836d4f62ee9",
+      "size_bytes": 282
+    },
+    {
+      "mode": "0644",
+      "path": "requirements-dev.txt",
+      "sha256": "c807fc113ed494cceb7b432f1147d706b33d9d6677651f8d90dd2f0d248ceee9",
+      "size_bytes": 173
+    },
+    {
+      "mode": "0644",
+      "path": "requirements.txt",
+      "sha256": "5519dd4c57e09e8e08e0fe2b3bcee39bafd6d7dc0dd57777ed36efc3b9b36199",
+      "size_bytes": 317
+    },
+    {
+      "mode": "0644",
+      "path": "runtime-services.json",
+      "sha256": "3cce5f7018367935bd1758187a46847641d3d5f10e694884a8fa3e17a1a4edce",
+      "size_bytes": 520
+    },
+    {
+      "mode": "0644",
+      "path": "test_plan.md",
+      "sha256": "55978dbb1c3558847400c93fb4fa20cf3ee2905749e7237ce9c1214479ba7998",
+      "size_bytes": 32896
+    },
+    {
+      "mode": "0644",
+      "path": "docs/API.md",
+      "sha256": "c6248eeda295d76843fe3f2754d22a02b34b6a50863d7a5dad9ddf9a5b7f4597",
+      "size_bytes": 35125
+    },
+    {
+      "mode": "0644",
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "26b32dc998d4c92799684fe37daf642378901d00bceaa334cdc8d9fb7d0e24ac",
+      "size_bytes": 20485
+    },
+    {
+      "mode": "0644",
+      "path": "docs/OPERATIONS.md",
+      "sha256": "b0d739d29f2a5211609f2bcc17f4a24d81e7c8e6d490f2723f729eb104001fa1",
+      "size_bytes": 25256
+    },
+    {
+      "mode": "0644",
+      "path": "docs/UI.md",
+      "sha256": "ab57e861da6c02179f13c335c8ab4928d6c7ed9100394fa7f7e73fc2f51830e9",
+      "size_bytes": 20823
+    },
+    {
+      "mode": "0644",
+      "path": "docs/USER_GUIDE.md",
+      "sha256": "76a5223ef72e6addb2b163cf49baca355f002ccf494b96947e1696847a55198f",
+      "size_bytes": 19310
+    },
+    {
+      "mode": "0644",
+      "path": "docs/examples/01_compute_flow.py",
+      "sha256": "1a37d4dc6ca47db317bd16d0bffa59224fa12679bf2d739de67791829d431b16",
+      "size_bytes": 3679
+    },
+    {
+      "mode": "0644",
+      "path": "docs/examples/02_api_walkthrough.sh",
+      "sha256": "3f97cd259462239c6270bdfba1597a94352708e0b38773971502458437085ad1",
+      "size_bytes": 4637
+    },
+    {
+      "mode": "0644",
+      "path": "docs/examples/03_import_hydrants.sh",
+      "sha256": "5ac379f40b83a794878299712c9d060c0c123b321ca815f0b21fc9c29509791d",
+      "size_bytes": 3817
+    },
+    {
+      "mode": "0644",
+      "path": "docs/examples/04_export_ledger.sh",
+      "sha256": "4fe2644756e38f22d57db79330d8094e3622ca9337f6f74301a6ff0e07c53e14",
+      "size_bytes": 1941
+    },
+    {
+      "mode": "0644",
+      "path": "docs/examples/05_python_client.py",
+      "sha256": "8fa215e3cc49c6e4b394e6bcc315251d71955977105e5e6e565453081d863044",
+      "size_bytes": 4731
+    },
+    {
+      "mode": "0644",
+      "path": "docs/examples/README.md",
+      "sha256": "c44092acddfc43152b9105597e048c8cc88e383edf73654f3fc7e34046a3941d",
+      "size_bytes": 3951
+    },
+    {
+      "mode": "0644",
+      "path": "hydrantproof/__init__.py",
+      "sha256": "f59285ca041374e5629e6855c667a15a4e9a6086ca3003601bcca88c8dcdab6a",
+      "size_bytes": 71
+    },
+    {
+      "mode": "0644",
+      "path": "hydrantproof/asgi.py",
+      "sha256": "e760b974bb7bab9b65f870770fbb42573ae2ae9133ee70e901d385f2415d5357",
+      "size_bytes": 370
+    },
+    {
+      "mode": "0644",
+      "path": "hydrantproof/settings.py",
+      "sha256": "295111547454d89999dfe7444ec9888176068d5900dfedf02633a380ed618018",
+      "size_bytes": 7408
+    },
+    {
+      "mode": "0644",
+      "path": "hydrantproof/urls.py",
+      "sha256": "a32178e87c9ff695856d16e218558584aa2405e888da052973bf38fed81ae8a1",
+      "size_bytes": 519
+    },
+    {
+      "mode": "0644",
+      "path": "hydrantproof/wsgi.py",
+      "sha256": "5c32f148f4f7040f140ea6f49aedc19dd49523bbe42a06eaa3187321a6787dc1",
+      "size_bytes": 816
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/admin.py",
+      "sha256": "f4123a5e2699cdc3d5de765663d6d6b4a64da41c11c7a858e553a23816ff1342",
+      "size_bytes": 6420
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/api.py",
+      "sha256": "28d3c822856954389b7e98d16d6efad8cf19ade6ef7f1693c7695d24f79c2235",
+      "size_bytes": 34560
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/api_files.py",
+      "sha256": "086342b9a8258cc67bf7965c07ac22acc4cd43796b4383cfcde6950d16a99999",
+      "size_bytes": 21916
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/api_jobs.py",
+      "sha256": "815a8a55b52f0eadb63049bab73a9bcdbc29177f2eba432f83b81e9234d8fca4",
+      "size_bytes": 14632
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/apps.py",
+      "sha256": "7941906456a2859b797961d36e9c9320deb29d3354f58376f30829f7082fef42",
+      "size_bytes": 437
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/auth.py",
+      "sha256": "740660b43d06fab92c90d257058e9b9be1e7bfeebc08e1d40646f1f047af6104",
+      "size_bytes": 9823
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/constants.py",
+      "sha256": "009cec249e39aee11f084f3c6e90c0f9e917fca7e925ca0747f54774bf6cbfd0",
+      "size_bytes": 10589
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/context.py",
+      "sha256": "baeeb57eb25f8bb71b65f23ed2e67e2fe52c7ad673a3e4980ad571d7bd3e1a96",
+      "size_bytes": 1344
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/coverage.py",
+      "sha256": "f9c234bb0d769cb326005027c66fc188f90d848fc95343bef42cb4204ab7a628",
+      "size_bytes": 15622
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/coverage_runner.py",
+      "sha256": "be2da6154426d76f167501a0901606b5611824f42ca3e04e274cb1154d7b7896",
+      "size_bytes": 5060
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/csvio.py",
+      "sha256": "cba9bfb2bd9b1628479d3c173aea4e229b3b88ad99a1f455ace14b9aa7af655f",
+      "size_bytes": 3471
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/derive.py",
+      "sha256": "8d7585e5588dcdddfd40c6555d4f6e802bf3ade2e27604ef716034ea34b8b785",
+      "size_bytes": 16729
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/executor.py",
+      "sha256": "12ce432a1ec4d74b91d6ac08d0d9a66604cf16181a5a65e14f0d7503ba271257",
+      "size_bytes": 13246
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/export_document.py",
+      "sha256": "1f46787a1be27ff8188e997006839457fd1ae797e0f78d9d3bd1fb362aaa418d",
+      "size_bytes": 2275
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/exports.py",
+      "sha256": "dc6c8d0bcc062f04f67b3bfdf681859e27d91702630158a5e7190c3ec96ae483",
+      "size_bytes": 7168
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/geo.py",
+      "sha256": "ad9d066cb0356378053632b1e3bf7e49f2c7d1ec303da643bb03a9dd2bb45f1d",
+      "size_bytes": 2339
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/health.py",
+      "sha256": "97e44800d15c69dd6fb08482374e94df15c2c5d19166beadb6075ee46a64a482",
+      "size_bytes": 2081
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/hydraulics.py",
+      "sha256": "6457803e4b02bafce4388cdbf415ad725937ce8425235f6237e46624e0b04e7d",
+      "size_bytes": 9496
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/imports.py",
+      "sha256": "50cac6ec38d286457c239a09d54de5c5204b23e1322f6c0e24b9e8ab075b09c1",
+      "size_bytes": 29725
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/jobs.py",
+      "sha256": "24f2f2380f5f75385acb5d0824b7a984105aa11b6ce0cc4c885a8114784353f0",
+      "size_bytes": 2953
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/media.py",
+      "sha256": "a098f42d3ea9ed7a2f9ad647ef3973a3840848d5880642f0341a8a27c99befa9",
+      "size_bytes": 12760
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/middleware.py",
+      "sha256": "4724f6df701031a8f0f0a69965eb40a033ab9143e097aa7f0693c54edd87aec0",
+      "size_bytes": 1530
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/models.py",
+      "sha256": "5df1cc1ee662e5a1b063c09a4af3f5091ff5d3d54693f783e0a04d3c1c0814e4",
+      "size_bytes": 31078
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/notifications.py",
+      "sha256": "6a1e4227ac9c7fb0c2fd902e6a55b08b8275e2324baf95fe1cdf3ace4164c682",
+      "size_bytes": 5927
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/pack_render.py",
+      "sha256": "613966b33b051e11c81e4a746d1c7e904ff3d7e497f972c3333048431771b38d",
+      "size_bytes": 45292
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/pages.py",
+      "sha256": "5a3340f669d92953221c5bc3764cfa38b642d58e3db3640a84e696fbb6385583",
+      "size_bytes": 14983
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/render_stack.py",
+      "sha256": "4cb3aa824d0fbe8920f148e734713a5686a6b80b757d264bc706935ff15b754b",
+      "size_bytes": 3062
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/schema.py",
+      "sha256": "5330e13f24c73ac0d12a648b0518f53e6f82d58337112b254f44af2e22ab59a6",
+      "size_bytes": 1136
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/secret_key.py",
+      "sha256": "fdf0ea62edfac6b6eb7d2325e6bba11756ac616d3a810b68bead20432c819d7c",
+      "size_bytes": 3185
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/serializers.py",
+      "sha256": "74f689bee6b724efbc48f4f662b9df9196fd66941fb97d94d8d7cb5d4f845681",
+      "size_bytes": 21874
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/services.py",
+      "sha256": "27dbc46f6cb19da0edef3d9e2fee2ea76ab5dce1460fe9c777fa8452e54bf0d7",
+      "size_bytes": 25111
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/signals.py",
+      "sha256": "06970b565416f8b2b40c6ceb885256db2832184b0e7ef65688ae4c15e7886420",
+      "size_bytes": 2551
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/staleness.py",
+      "sha256": "d283b25e29b241ee2a5f885f5f4e1a75a959a6a7177f2a92a196095737e8e973",
+      "size_bytes": 2656
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/urls.py",
+      "sha256": "373ff55e0c2606428747f0b3760872f3aa5d1577d4f30802d41416e9be3b7c0d",
+      "size_bytes": 1553
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/urls_api.py",
+      "sha256": "459c9b8a0b3796f56571d515329b71d264e6ddbbff27f73c1b46ee5c24653cb4",
+      "size_bytes": 4720
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/views.py",
+      "sha256": "7f5b4839e02292ecefddea8d0a30a94c635054a9a3f8c6f420b64d23eda253c4",
+      "size_bytes": 10235
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/bake_render_stack.py",
+      "sha256": "f23ac044891dea30578de0f11cb1ba231b385d7871dada54de62fb7f5ac86248",
+      "size_bytes": 717
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/check_posture.py",
+      "sha256": "fc17d2b57692d589b690f7bb22a75651ad9b318a680bfde7a80f8ef4d23b5076",
+      "size_bytes": 5797
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/clear_lockouts.py",
+      "sha256": "2c51ddf121296951a0f9cf7efcdcb79836b53880750f0fdb769cf159c9455779",
+      "size_bytes": 645
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/clear_purge_marker.py",
+      "sha256": "e3bed8fa261cc2d4f7c96686bd7b84c13fc0a53bcc5e2cd0f85d6ec496d3e7af",
+      "size_bytes": 465
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/createuser.py",
+      "sha256": "7ca77b8f0c9f2ca8718cea176bcfb66e6ca1dc981304ec1e2eb1ef153d8fba31",
+      "size_bytes": 1439
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/drain_outbox.py",
+      "sha256": "bf94b21ac97c66a3ec7aaa5933f2807eecdcf1936d72529c81797f1defe20be7",
+      "size_bytes": 741
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/enqueue_notifications.py",
+      "sha256": "648895a23912b6a8614869e0f5dc99c6d4f0ce64ce82675006b9c409000886a3",
+      "size_bytes": 702
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/ensure_secret.py",
+      "sha256": "35de6c7a71e8e2059a007f30a1ccba45c32508f0370687ee526bb3e5ab6c2df6",
+      "size_bytes": 3193
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/export_ledger.py",
+      "sha256": "bf1cef64d6943b99535771d22d7d11cacfb97336e00724a927e4a367cc7b3c9a",
+      "size_bytes": 1655
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/import_ledger.py",
+      "sha256": "a26e4da0c66bf0dfd6ae5949d54a312ad7e11282140efe243a05026128728106",
+      "size_bytes": 5581
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/prune_data.py",
+      "sha256": "8d929edfebbb0e69ab077df00a20a30a95c188eefe115d1575ff40e3f69fa94f",
+      "size_bytes": 5592
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/purge_demo.py",
+      "sha256": "d6e029e2d9fecb6c891915d30c48b07ca9d9a05227a66f1619b0bab5d3e060ff",
+      "size_bytes": 5532
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/recover_jobs.py",
+      "sha256": "bdbce946c315cce537ef8616566696d79e6e5fff52613024bb4044cf082456a3",
+      "size_bytes": 518
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/management/commands/seed_demo.py",
+      "sha256": "5ad9a9a133bcb01cc13628eacde8bd7aaa1207b12aead2613995df090cc81f01",
+      "size_bytes": 14351
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/migrations/0001_initial.py",
+      "sha256": "24ff13479b51cc0897f567f6a225a34fd6c34ec33fb90f7fc3b58dbfee75d68a",
+      "size_bytes": 34847
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/migrations/0002_create_groups.py",
+      "sha256": "564677f6fe2c15754b91fde6b612c7888d4c1c4dca2d670489a26206ba00c423",
+      "size_bytes": 1082
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/migrations/0003_tier_a_triggers.py",
+      "sha256": "8b2b419acf1fe1ab7e0427d3fb2dc53634ba7e95ea85ef7f57bd49a80aa3b0ca",
+      "size_bytes": 1827
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/app.css",
+      "sha256": "eb6e78b03450cd3edbdbe0e0eeb008745f0a094270d5a47fae529a18799938f9",
+      "size_bytes": 38949
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/app.js",
+      "sha256": "8329ab750abf4e7891d7bfb86eb3074ed50af3d52102c82eda378e1e32c885b3",
+      "size_bytes": 24587
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/coverage.js",
+      "sha256": "434b4cc5eed6fbfd8d0124eb47547a111482ebfd2c0af91f13b368d997a72450",
+      "size_bytes": 6928
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/field.js",
+      "sha256": "cf17361556d4660c19ee36d029742cdf0e2781b8a4953b2087193276dd7b9687",
+      "size_bytes": 21317
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/flowtest.js",
+      "sha256": "1a66af5817e6d825cccc0e83128238a87e7e0ddd4c71e67d99ab44874b330fae",
+      "size_bytes": 18640
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/hydrantform.js",
+      "sha256": "9b433070cac285e3b8770fe4fd867f5c1fac7ef6cd552b0dcecbcd9fb026fc13",
+      "size_bytes": 8842
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/inspection.js",
+      "sha256": "908284d8013ab88964c11636ab055b1554e0522246b6b4e3c1692200e65ea784",
+      "size_bytes": 8196
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/map.js",
+      "sha256": "618d0fe796aab214901be5f2abc4d22830a491d294ea152d47822054cd9a3f8c",
+      "size_bytes": 3699
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/packs.js",
+      "sha256": "2d85b03a13c9581a7a1b4606f8dfef8e875cc78673a5d2f618066d7b758fd9f4",
+      "size_bytes": 3789
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/parcelform.js",
+      "sha256": "a3358b628f3c6f18c5902820abb5abcd7eaff3e84664f1f96235613d23f95d5a",
+      "size_bytes": 5972
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/pinmap.js",
+      "sha256": "af2d0e17286ae56b2515a2e805d32f3ecac4dfe25e3012ecb41622d53386b438",
+      "size_bytes": 6139
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/preview-bootstrap.js",
+      "sha256": "106f3de8b677c5541be558e6acf2e4f2ebafcd9b8af6e8c5fde2186b042a9101",
+      "size_bytes": 3018
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/statusform.js",
+      "sha256": "c7f7a9954576a4e31c186be354e60823baa22a3f2230ff94d4eab449f6cf7edc",
+      "size_bytes": 5546
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/tokens.css",
+      "sha256": "7fc8329c77f1cc65cc192c8d6f06b060bd62c07a42086212b7c80678dcc4a192",
+      "size_bytes": 13146
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/OFL.txt",
+      "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+      "size_bytes": 4456
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/VENDOR.md",
+      "sha256": "ebdc8d9b669a198e5e8b1f70897050f9401fbe175f085989b1d30e03fe738664",
+      "size_bytes": 1293
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-mono-latin-400-normal.woff2",
+      "sha256": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7",
+      "size_bytes": 14708
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-mono-latin-500-normal.woff2",
+      "sha256": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22",
+      "size_bytes": 14888
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-mono-latin-600-normal.woff2",
+      "sha256": "0d1f0b8d0722224e32e9f28261bdc86c79115be73444ae5eceb73976a1bcdf83",
+      "size_bytes": 15620
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-sans-latin-400-normal.woff2",
+      "sha256": "3b646991d30055a93a4ecc499713d4347953a74a947ecab435ab72070cbdab0e",
+      "size_bytes": 22588
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-sans-latin-500-normal.woff2",
+      "sha256": "0717336fb31fcdcde4b8deb3675bb4a0f7f6d484864afcd6751ac29975962203",
+      "size_bytes": 24184
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-sans-latin-600-normal.woff2",
+      "sha256": "8960851d691c054ed38e259bdcf1a6190d157b4203ed5bb32c632a863fb8ec2f",
+      "size_bytes": 24252
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/fonts/ibm-plex-sans-latin-700-normal.woff2",
+      "sha256": "42e7b0c143c19df9d99fd896e76b48f846edf0902d200bc29796b34d12c33aa7",
+      "size_bytes": 22832
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/import_templates/flow-tests.csv",
+      "sha256": "4da281201e633d6c0b4ad7cf6bc501e16c1238241d502c4bf75db7af62befbc0",
+      "size_bytes": 107
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/import_templates/hydrants.csv",
+      "sha256": "40687e1e21074719055c76c2dbe28c554eb670fe2d273f99dd9c9a52ae6d9488",
+      "size_bytes": 225
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/ledger/import_templates/parcels.csv",
+      "sha256": "cf9d0237d6cd9ce6eed1a34d60749a477d3d59ee5a2ca2c7829cec9702f4ed01",
+      "size_bytes": 114
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/LICENSE",
+      "sha256": "84466231dd5f8c14cdbe7eeac6bb45b8e4039a524b9be31dbe85d596040146fe",
+      "size_bytes": 1380
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/VENDOR.md",
+      "sha256": "c5308838e06cb331aebd8e8960b1565553fe944ae6ccff0da773d987836f077e",
+      "size_bytes": 1319
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/leaflet.css",
+      "sha256": "90b693d86392a4779c861b28cf307e7e59c3fb35328c4d8b95f58f814d38c722",
+      "size_bytes": 14657
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/leaflet.js",
+      "sha256": "5819285cec137b229c94e1ee5ad73e8b6b84345a4367d60f75fe477fe0fb7b03",
+      "size_bytes": 146715
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/leaflet.js.map",
+      "sha256": "a7a6c324c430b0a049d0a86862b18400583daa4dc10fbe55835cb492baa9fdc1",
+      "size_bytes": 223926
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/layers-2x.png",
+      "sha256": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf",
+      "size_bytes": 1259
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/layers.png",
+      "sha256": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6",
+      "size_bytes": 696
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/marker-icon-2x.png",
+      "sha256": "00179c4c1ee830d3a108412ae0d294f55776cfeb085c60129a39aa6fc4ae2528",
+      "size_bytes": 2464
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/marker-icon.png",
+      "sha256": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437",
+      "size_bytes": 1466
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/marker-icon@2x.png",
+      "sha256": "454dc479e82b487529b6b93d6a9b29ac69ca7b4f5a9d5fdf8e01871f6d216113",
+      "size_bytes": 4033
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/marker-shadow.png",
+      "sha256": "264f5c640339f042dd729062cfc04c17f8ea0f29882b538e3848ed8f10edb4da",
+      "size_bytes": 618
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/reset-view.png",
+      "sha256": "f59e55cf950de1230e6b0247e3b893e302cc89a474b096d0e863d28d14537aa3",
+      "size_bytes": 159
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/static/vendor/leaflet/images/toggle.png",
+      "sha256": "2a61a00379202bb8b61c9ec5d22c169d4feb194b8f3232de08b36d64b1f5b041",
+      "size_bytes": 345
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/_icon.html",
+      "sha256": "9063e298bad7f7b59600df007081baca2e5164bab3e261f9ad04ea235b7a3712",
+      "size_bytes": 6134
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/_mark.html",
+      "sha256": "43b0c290f58b2a59c5707a431c8d3a4cd8715b5c1f3a4c8fa9f9b9e02d87d53d",
+      "size_bytes": 636
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/base.html",
+      "sha256": "8cf98e96ffadaf5ee55f3a5fd9564fd0131020b38b0855f6887081ff57817032",
+      "size_bytes": 5704
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/coverage.html",
+      "sha256": "dcff2d6f4c3b60af410a8b4ae6b15a5752c230a2795dcd60e0813fd49a4c6840",
+      "size_bytes": 9743
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/dashboard.html",
+      "sha256": "8689c68b2fb2ee5368397433906b9b5d3dd0d219f593b0d199fcd3d327c2dc80",
+      "size_bytes": 16432
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/exports.html",
+      "sha256": "81576f138c1e74f2d771b2a31a41e684e4a8e259479bdcbd3d0ed0ba62c446a3",
+      "size_bytes": 5198
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/field.html",
+      "sha256": "3bca194bb2d2eae1f3f65085bac415066ff73cb414b96abb0d5a026afa19479e",
+      "size_bytes": 7650
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/flow_test_form.html",
+      "sha256": "f73103a01be33a5a37c0e0918f28f52f1ff19a3e386827da5fd26bc560b8fbb0",
+      "size_bytes": 10990
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/guide.html",
+      "sha256": "a1e16e5af963fefc6d799abb31c86c5a1a12d84668fcde3a7c2a0b5521eec4b1",
+      "size_bytes": 10387
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/hydrant_detail.html",
+      "sha256": "9ff2333302ec98d0ce1e5e849cecc6fc57f2ff4f89af66f535490be0c5f8c7cb",
+      "size_bytes": 25047
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/hydrant_form.html",
+      "sha256": "34bfc848eff346cf36c99fd7d579913c331911da832378832eae81e159059a98",
+      "size_bytes": 14400
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/hydrants.html",
+      "sha256": "459da7408fd1de72082d88cd4c5287e69d3fcf01aeeef6f0b5694f4621c5f44b",
+      "size_bytes": 5546
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/inspection_form.html",
+      "sha256": "24c6b20067a65097befb2bf5f5fe1d698a4c225d77a4a044657cc6c4733273ae",
+      "size_bytes": 9186
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/login.html",
+      "sha256": "96f08ac2766e17d9bff2e573c11229d0736cd1bcfc9799913bd775b8ad1b3296",
+      "size_bytes": 2241
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/packs.html",
+      "sha256": "a23dec5292757cce511938f55cd290385ebff757a2c098608f13e412dfa4764c",
+      "size_bytes": 7973
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/parcel_detail.html",
+      "sha256": "9d61f0d20fcdb5c25e0e2112a4ec7c0ff5577a6e194f46607ccc3552ff405e56",
+      "size_bytes": 6503
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/parcel_form.html",
+      "sha256": "4d815657bcbdfc3b5c0825dc17e716cd57928d4c1d93bdcdad87cc43c5d37704",
+      "size_bytes": 9019
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/parcels.html",
+      "sha256": "9a30ae8cdc37d5e494bc2bffe06b86c568090a93fb4eff84387b0e019f8594e9",
+      "size_bytes": 4565
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templates/ledger/settings.html",
+      "sha256": "82d1444cc38e65ca595b2fa4b42a3b3427317d7cc422a9fe4ba8b6dc82870bfd",
+      "size_bytes": 5136
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templatetags/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "mode": "0644",
+      "path": "ledger/templatetags/ui.py",
+      "sha256": "2994ff6b0672734049fd536d989aa0e3bb8ed577683d7699f7170dc589b544c2",
+      "size_bytes": 3669
+    },
+    {
+      "mode": "0644",
+      "path": "scripts/browser_walk.py",
+      "sha256": "e7426f446dab2739151050be8eda7f1852bbf55ef9594d38032077d7511b2b35",
+      "size_bytes": 47853
+    },
+    {
+      "mode": "0755",
+      "path": "scripts/smoke_runtime.sh",
+      "sha256": "516e792591e9d8b42432db2313cc2e98d8a86124309a6f0d3e3fdb824001c43b",
+      "size_bytes": 6728
+    },
+    {
+      "mode": "0644",
+      "path": "tests/conftest.py",
+      "sha256": "d2fc82d47b5a54efb7d73286070ae7796d70716d1e8b68335f0e191d56809447",
+      "size_bytes": 3135
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_attachments.py",
+      "sha256": "ac4c8e2a8ece8153e6dfbbc41f6bef425eb00484ecb4fe145d299083913b2c38",
+      "size_bytes": 13460
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_auth_and_health.py",
+      "sha256": "0302ed0ea6aac4540682cf9473d24089bb031089074e634aeb241128611f6e91",
+      "size_bytes": 11512
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_coverage.py",
+      "sha256": "0da08412bd30441383298390c5e56e0d9d54e471996ba6f5040291fb5c56bf57",
+      "size_bytes": 11069
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_coverage_jobs.py",
+      "sha256": "d51bfd5bebc443e54d1838b332ef22f7b4475a4f5cf9905df6c9f41c660ee499",
+      "size_bytes": 13583
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_derive.py",
+      "sha256": "4d480ea2d9cc720c9da534cdb2f4ba31d0b16dfcb5fad4afaf0a0d58fa801e7e",
+      "size_bytes": 17123
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_exports_and_disclaimers.py",
+      "sha256": "738563447b9761d1f6543443f8d121b441ed9c0f7732652b9fe8d0de430ae08f",
+      "size_bytes": 11453
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_geo.py",
+      "sha256": "54426b2c653851b0dcf069115d6617221ca6f7f6a7db99369673829fc4010497",
+      "size_bytes": 2459
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_hydraulics.py",
+      "sha256": "b0df85537b2d469d562d444812eac2e1e8d42eeee7a377ccab530fa5b36a2833",
+      "size_bytes": 10642
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_imports_overlays.py",
+      "sha256": "6b7cb6650415c3bffc1efebfcf88a40d38f52c5e19c8f30cff8b497208f829df",
+      "size_bytes": 31333
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_ledger_api.py",
+      "sha256": "aa1435a856629d4aa7d76241ab7ee70396173858f69b6525644bf145acd3ad52",
+      "size_bytes": 34689
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_lifecycle_ops.py",
+      "sha256": "1dd464a1f75867846c30bb38b1281485fddd71f5073a0dae270d048f92d11142",
+      "size_bytes": 17760
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_models_triggers.py",
+      "sha256": "d8ecd39224c3611dcedaea22298a4f205aff8510d910598f459f0e2727b3a1cd",
+      "size_bytes": 10299
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_packs.py",
+      "sha256": "e32a9b5ab73bcb9508a4ac6a0bec15ef29ba14eec9cb555b4bc893e27d9c0ff9",
+      "size_bytes": 13012
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_pages.py",
+      "sha256": "aeda76244fc3e75a0b71aafd041174cfebdb71b5dc791c415a9d8721c9503f7e",
+      "size_bytes": 9716
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_route_table.py",
+      "sha256": "e3157278f3db535a2ce743b3c5f6ae41938a6ebabe00c0b9d66c7431874d2207",
+      "size_bytes": 7965
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_runtime_plan.py",
+      "sha256": "ce3837f35d8aad3d789916265522f1ebe1d161464b4c40979eaf72f93e72238b",
+      "size_bytes": 31790
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_scale.py",
+      "sha256": "c5ded6213430fc82429aae03864093957e017c78b38af415783fffc8a04f9c49",
+      "size_bytes": 9885
+    },
+    {
+      "mode": "0644",
+      "path": "tests/test_ui_system.py",
+      "sha256": "47a151581a482c5a60a24301b0c470d8aec9222712a8dddc6892991c98118435",
+      "size_bytes": 48147
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{% extends "ledger/base.html" %}
+{% load ui %}
+{% block title %}Hydrants — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Registry</p>
+    <h1 class="page-head__title">Hydrant registry</h1>
+    <p class="page-head__sub">
+      {{ shown }} of {{ total }} hydrant{{ total|pluralize }} · readiness is derived from the stored tests,
+      inspections and the district's windows. Rated flow at {{ target_residual_psi|floatformat:0 }} psi residual
+      is one test's snapshot, not a main-capacity model.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="/hydrants/new/">Add hydrant</a>
+    <a class="btn btn--secondary" href="/exports/">Printable forms</a>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Find a hydrant</h2>
+    <span class="panel__meta">filters run on the server</span>
+  </div>
+  <form class="panel__body action-panel" method="get" action="/hydrants/" role="search">
+    <div class="action-panel__row">
+      <div class="field">
+        <label class="field__label" for="q">Asset tag</label>
+        <input class="input" id="q" name="q" value="{{ query }}" placeholder="H-14" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="field__label" for="status">Service status</label>
+        <select class="select" id="status" name="status">
+          <option value="">Any status</option>
+          {% for value, label in status_choices %}
+          <option value="{{ value }}"{% if value == status_filter %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" for="readiness">Readiness</label>
+        <select class="select" id="readiness" name="readiness">
+          <option value="">Any readiness</option>
+          <option value="READY"{% if readiness_filter == "READY" %} selected{% endif %}>Ready</option>
+          <option value="WATCH"{% if readiness_filter == "WATCH" %} selected{% endif %}>Watch</option>
+          <option value="NOT_READY"{% if readiness_filter == "NOT_READY" %} selected{% endif %}>Not ready</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn--secondary">Apply filters</button>
+      {% if query or status_filter or readiness_filter %}
+      <a class="btn btn--ghost" href="/hydrants/">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Hydrants</h2>
+    <span class="panel__count">{{ rows|length }}</span>
+    <span class="panel__meta">class chips use the NFPA 291 palette</span>
+  </div>
+
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Asset tag</th>
+          <th scope="col">Status</th>
+          <th scope="col">Readiness</th>
+          <th scope="col">Class</th>
+          <th scope="col">Trend</th>
+          <th scope="col">Test recency</th>
+          <th scope="col">Inspection recency</th>
+          <th scope="col" class="is-num">Last tested</th>
+          <th scope="col" class="is-num">Rated at 20 psi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="ledger-row ledger-row--{{ row.derived.readiness|readiness_slug }}">
+          <th scope="row" class="nowrap">
+            <a href="/hydrants/{{ row.hydrant.pk }}/">{{ row.hydrant.asset_tag }}</a>
+          </th>
+          <td class="nowrap">{{ row.hydrant.status|status_label }}</td>
+          <td class="nowrap">
+            <span class="badge badge--{{ row.derived.readiness|readiness_slug }}">
+              <span class="dot dot--{{ row.derived.readiness|readiness_slug }}" aria-hidden="true"></span>{{ row.derived.readiness|readiness_label }}
+            </span>
+          </td>
+          <td>
+            {% if row.derived.capacity_class %}
+            <span class="class-chip class-chip--{{ row.derived.capacity_class|class_slug }}">{{ row.derived.capacity_class }}</span>
+            {% else %}
+            <span class="dash">—</span>
+            {% endif %}
+          </td>
+          <td class="nowrap">{{ row.derived.trend|trend_label }}</td>
+          <td class="nowrap">{{ row.derived.test_recency_flag|recency_label }}</td>
+          <td class="nowrap">{{ row.derived.inspection_recency_flag|recency_label }}</td>
+          <td class="is-num">{{ row.derived.latest_tested_on|date:"Y-m-d"|default:"—" }}</td>
+          <td class="is-num">{{ row.derived.rated_gpm_20|gpm:1 }}<span class="num__unit">gpm</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="notice">
+    {% if query or status_filter or readiness_filter %}
+    <p class="notice__title">No hydrant matches these filters.</p>
+    <p class="notice__next"><a href="/hydrants/">Clear the filters</a> to see all {{ total }} hydrants.</p>
+    {% else %}
+    <p class="notice__title">No hydrants yet.</p>
+    <p class="notice__next">
+      Import an inventory CSV through the two-phase import, or <a href="/hydrants/new/">add the first hydrant</a>
+      and drop its pin on the map.
+    </p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="panel__note">
+    A <span class="mono">NOT_READY</span> hydrant always names its gating flags on its own page; the table shows
+    the state, the page shows the reason.
+  </p>
+</section>
+
+{% endblock %}

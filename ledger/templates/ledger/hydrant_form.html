@@ -1,0 +1,247 @@
+{% extends "ledger/base.html" %}
+{% load static ui %}
+{% block title %}{% if editing %}Edit {{ hydrant.asset_tag }}{% else %}Add hydrant{% endif %} — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Registry{% if editing %} · hydrant #{{ hydrant.pk }}{% endif %}</p>
+    <h1 class="page-head__title">{% if editing %}Edit {{ hydrant.asset_tag }}{% else %}Add a hydrant{% endif %}</h1>
+    <p class="page-head__sub">
+      {% if editing %}
+        Attributes only. The asset tag is immutable, coordinates are logged as an attribute change, and the
+        service lifecycle moves through its own attributed event log — not through this form.
+      {% else %}
+        The asset tag is the district's own identifier and must be unique. The pin is required: coverage is
+        computed from real coordinates, so a hydrant without one cannot be credited to any structure.
+      {% endif %}
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--ghost" href="{% if editing %}/hydrants/{{ hydrant.pk }}/{% else %}/hydrants/{% endif %}">Cancel</a>
+  </div>
+</div>
+
+{% if not can_write %}
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Your role is read-only.</strong> Adding or editing a hydrant needs the
+    <span class="mono">editor</span> role or above; the controls below are disabled.
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid--wide-left">
+  <form class="stack" id="hydrant-form" method="post"
+        action="{% if editing %}/api/v1/hydrants/{{ hydrant.pk }}/{% else %}/api/v1/hydrants/{% endif %}"
+        data-mode="{% if editing %}edit{% else %}create{% endif %}" novalidate>
+    {% csrf_token %}
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Identity</h2><span class="panel__meta">what the district calls it</span></div>
+      <div class="panel__body">
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="asset_tag">Asset tag</label>
+            {% if editing %}
+            <input class="input" id="asset_tag" value="{{ hydrant.asset_tag }}" disabled
+                   aria-describedby="asset-tag-note">
+            <p class="field__hint" id="asset-tag-note">Immutable — a renamed hydrant is a different record, and the
+              ledger's history would point at the wrong asset.</p>
+            {% else %}
+            <input class="input" id="asset_tag" name="asset_tag" maxlength="64" required
+                   autocomplete="off" spellcheck="false" placeholder="e.g. H-14" {% if not can_write %}disabled{% endif %}>
+            <p class="field__hint">As painted on the barrel, or as the district's inventory numbers it.</p>
+            {% endif %}
+          </div>
+          <div class="field">
+            <label class="field__label" for="location_description">Location description <span class="field__req">optional</span></label>
+            <input class="input" id="location_description" name="location_description" maxlength="255"
+                   value="{{ hydrant.location_description|default:'' }}" {% if not can_write %}disabled{% endif %}>
+            <p class="field__hint">"North side of Route 9, 200 ft east of the school driveway."</p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="ownership">Ownership <span class="field__req">optional</span></label>
+            <input class="input" id="ownership" name="ownership" maxlength="128"
+                   value="{{ hydrant.ownership|default:'' }}" {% if not can_write %}disabled{% endif %}>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="source_org">Source organization <span class="field__req">optional</span></label>
+          <input class="input" id="source_org" name="source_org" maxlength="128"
+                 value="{{ hydrant.source_org|default:'' }}" {% if not can_write %}disabled{% endif %}>
+          <p class="field__hint">The organization that owns the asset per district records — not merely the label
+            on the supplier's file.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Position</h2><span class="panel__meta">click the map or type coordinates</span></div>
+      <div class="panel__body">
+        <div class="map-shell">
+          <div class="map" id="pin-map"
+               data-lat="{{ hydrant.lat|default:'' }}" data-lon="{{ hydrant.lon|default:'' }}"
+               data-label="{{ hydrant.asset_tag|default:'' }}"
+               data-tile="{{ map_tile_url }}"></div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn--secondary btn--sm" id="use-location" {% if not can_write %}disabled{% endif %}>
+            Use my location
+          </button>
+          <span class="small" id="geo-readout">No position captured from this device.</span>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="lat">Latitude</label>
+            <input class="input input--num" id="lat" name="lat" type="number" step="0.0000001" min="-90" max="90"
+                   value="{{ hydrant.lat|default:'' }}" required {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="lon">Longitude</label>
+            <input class="input input--num" id="lon" name="lon" type="number" step="0.0000001" min="-180" max="180"
+                   value="{{ hydrant.lon|default:'' }}" required {% if not can_write %}disabled{% endif %}>
+          </div>
+        </div>
+        <p class="field__hint">
+          Browser geolocation is a convenience, never an attestation: it is client-asserted and is unavailable on
+          a plain-HTTP origin. The coordinates you submit are the coordinates the coverage engine uses.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Apparatus</h2><span class="panel__meta">defaults for future tests</span></div>
+      <div class="panel__body">
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="manufacturer">Manufacturer <span class="field__req">optional</span></label>
+            <input class="input" id="manufacturer" name="manufacturer" maxlength="128"
+                   value="{{ hydrant.manufacturer|default:'' }}" {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="model">Model <span class="field__req">optional</span></label>
+            <input class="input" id="model" name="model" maxlength="128"
+                   value="{{ hydrant.model|default:'' }}" {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="year_installed">Year installed <span class="field__req">optional</span></label>
+            <input class="input input--num" id="year_installed" name="year_installed" type="number"
+                   min="1800" max="2100" value="{{ hydrant.year_installed|default:'' }}" {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="main_size_inches">Main size (in) <span class="field__req">optional</span></label>
+            <input class="input input--num" id="main_size_inches" name="main_size_inches" type="number"
+                   step="0.01" min="0" max="99" value="{{ hydrant.main_size_inches|default:'' }}" {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="outlet_diameter_in">Default outlet (in)</label>
+            <input class="input input--num" id="outlet_diameter_in" name="outlet_diameter_in" type="number"
+                   step="0.01" min="0.01" max="12" value="{{ hydrant.outlet_diameter_in|default:'2.50' }}" {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="discharge_coefficient">Default coefficient</label>
+            <input class="input input--num" id="discharge_coefficient" name="discharge_coefficient" type="number"
+                   step="0.01" min="0.01" max="1" value="{{ hydrant.discharge_coefficient|default:'0.90' }}" {% if not can_write %}disabled{% endif %}>
+            <p class="field__hint">Presets: {% for preset, value in coefficient_presets.items %}{{ preset }} {{ value }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="notes">Notes <span class="field__req">optional</span></label>
+          <textarea class="textarea" id="notes" name="notes" rows="3"
+                    {% if not can_write %}disabled{% endif %}>{{ hydrant.notes|default:'' }}</textarea>
+        </div>
+      </div>
+    </section>
+
+    {% if not editing %}
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Initial service status</h2><span class="panel__meta">one attributed event</span></div>
+      <div class="panel__body">
+        <div class="field">
+          <label class="field__label" for="initial_status">Status</label>
+          <select class="select" id="initial_status" name="initial_status" {% if not can_write %}disabled{% endif %}>
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if status == "IN_SERVICE" %}selected{% endif %}>{{ status|status_label }}</option>
+            {% endfor %}
+          </select>
+          <p class="field__hint" id="status-hint">
+            A hydrant added as <span class="mono">OUT_OF_SERVICE</span> needs either an expected return date or an
+            explicit indefinite flag — the API refuses it otherwise, and never auto-reverts an expired date.
+          </p>
+        </div>
+        <div class="field-row" id="oos-fields" hidden>
+          <div class="field">
+            <label class="field__label" for="expected_return_on">Expected return</label>
+            <input class="input" type="date" id="expected_return_on" name="expected_return_on" {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="check" for="indefinite">
+              <input type="checkbox" id="indefinite" name="indefinite" {% if not can_write %}disabled{% endif %}>
+              <span>Indefinite — no return date is known</span>
+            </label>
+          </div>
+          <div class="field">
+            <label class="field__label" for="effective_on">Effective on <span class="field__req">optional</span></label>
+            <input class="input" type="date" id="effective_on" name="effective_on" {% if not can_write %}disabled{% endif %}>
+          </div>
+        </div>
+        <div class="field" id="retired-field" hidden>
+          <label class="field__label" for="initial_status_reason">Reason for retirement</label>
+          <input class="input" id="initial_status_reason" name="initial_status_reason" maxlength="255" {% if not can_write %}disabled{% endif %}>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <div class="btn-row">
+      <button type="submit" class="btn" id="submit-hydrant"{% if sample_data_banner %} data-confirm="Recording a real (non-sample) row deactivates every published demo account in the same transaction. That is the product&rsquo;s design: a published password must never guard real data. Continue?" data-confirm-title="This writes the district&rsquo;s first real record" data-confirm-accept="Record and deactivate demo accounts" data-confirm-danger="true"{% endif %}
+              {% if not can_write %}disabled aria-disabled="true" title="Read-only role"{% endif %}>
+        {% if editing %}Save attributes{% else %}Add hydrant{% endif %}
+      </button>
+      <a class="btn btn--ghost" href="{% if editing %}/hydrants/{{ hydrant.pk }}/{% else %}/hydrants/{% endif %}">Cancel</a>
+      <span class="small" id="submit-status" role="status"></span>
+    </div>
+
+    <div id="success-panel" hidden></div>
+  </form>
+
+  <aside class="stack">
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">What this writes</h2></div>
+      <div class="panel__body">
+        {% if editing %}
+        <p class="small">A <span class="mono">PATCH</span> to
+          <span class="mono">/api/v1/hydrants/{{ hydrant.pk }}/</span>. Every changed field is written to the
+          attribute history with the old value, the new value and the reason <span class="mono">manual</span>.</p>
+        {% else %}
+        <p class="small">A <span class="mono">POST</span> to <span class="mono">/api/v1/hydrants/</span>. The row
+          and its attributed initial status event are written in one transaction, so a hydrant can never exist
+          without a status history.</p>
+        {% endif %}
+        <p class="small">Recording a real (non-sample) hydrant deactivates the published demo accounts in the same
+          transaction — that is the product's design, not a bug.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Bulk alternative</h2></div>
+      <div class="panel__body">
+        <p class="small">For an existing inventory, the two-phase CSV import is faster and auditable: upload a dry
+          run, read the row-level errors, then commit with the single-use token.</p>
+        <p class="small">The import history is an API read
+          (<a class="mono" href="/api/v1/imports/">GET /api/v1/imports/</a>) ·
+          <a href="/static/ledger/import_templates/hydrants.csv">download the hydrant template</a></p>
+      </div>
+    </section>
+  </aside>
+</div>
+
+{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'ledger/pinmap.js' %}"></script>
+<script src="{% static 'ledger/hydrantform.js' %}"></script>
+{% endblock %}

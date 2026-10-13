@@ -1,0 +1,549 @@
+{% extends "ledger/base.html" %}
+{% load static ui %}
+{% block title %}{{ hydrant.asset_tag }} — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Registry · hydrant #{{ hydrant.pk }}</p>
+    <h1 class="page-head__title">{{ hydrant.asset_tag }}</h1>
+    <p class="page-head__sub">
+      {{ hydrant.location_description|default:"No location description recorded" }} ·
+      <span class="mono">{{ hydrant.lat|floatformat:5 }}, {{ hydrant.lon|floatformat:5 }}</span> ·
+      outlet {{ hydrant.outlet_diameter_in }} in at coefficient {{ hydrant.discharge_coefficient }}
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="/hydrants/{{ hydrant.pk }}/tests/new/">Record flow test</a>
+    <a class="btn btn--secondary" href="/hydrants/{{ hydrant.pk }}/inspections/new/">Record inspection</a>
+    <a class="btn btn--ghost" href="/hydrants/{{ hydrant.pk }}/edit/">Edit attributes</a>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Readiness</h2>
+    <span class="panel__meta">derived, never stored</span>
+  </div>
+  <div class="panel__body">
+    <div class="btn-row">
+      <span class="badge badge--{{ derived.readiness|readiness_slug }}">
+        <span class="dot dot--{{ derived.readiness|readiness_slug }}" aria-hidden="true"></span>{{ derived.readiness|readiness_label }}
+      </span>
+      <span class="badge badge--quiet">{{ hydrant.status|status_label }}</span>
+      {% if derived.capacity_class %}
+      <span class="class-chip class-chip--{{ derived.capacity_class|class_slug }}">{{ derived.capacity_class }}</span>
+      {% endif %}
+      <span class="small">Trend {{ derived.trend|trend_label }}</span>
+    </div>
+    <p class="small">
+      <strong>Gating flags:</strong> {{ derived.gating_flags|join:", "|default:"none" }} ·
+      <strong>Attention:</strong> {{ derived.attention_flags|join:", "|default:"none" }}
+      {% if derived.exclusion_code %}· <strong>District-credit exclusion:</strong> {{ derived.exclusion_code }}{% endif %}
+    </p>
+    <p class="small">
+      Gating flags block district credit in the worksheet; attention flags never do. Both are computed from the
+      frozen windows and the stored tests — nothing on this page edits them.
+    </p>
+  </div>
+</section>
+
+<div class="grid grid--wide-left">
+
+  <div class="stack">
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Flow tests</h2>
+        <span class="panel__count">{{ tests|length }}</span>
+        <span class="panel__meta">append-only · corrections supersede</span>
+      </div>
+      {% if tests %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" class="is-num">Tested on</th>
+              <th scope="col" class="is-num">Static</th>
+              <th scope="col" class="is-num">Residual</th>
+              <th scope="col" class="is-num">Q_F</th>
+              <th scope="col" class="is-num">Q_R at 20 psi</th>
+              <th scope="col">Class</th>
+              <th scope="col">Warnings</th>
+              <th scope="col">Formula</th>
+              <th scope="col">Record</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for test in tests %}
+            <tr class="ledger-row {% if test.superseded_by_id or test.pk != current_test_id %}ledger-row--none{% else %}ledger-row--{{ derived.readiness|readiness_slug }}{% endif %}">
+              <th scope="row" class="is-num nowrap">{{ test.tested_on|date:"Y-m-d" }}</th>
+              <td class="is-num">{{ test.static_psi|gpm:1 }}<span class="num__unit">psi</span></td>
+              <td class="is-num">{{ test.residual_psi|gpm:1 }}<span class="num__unit">psi</span></td>
+              <td class="is-num">{{ test.computed_total_gpm|gpm:1 }}<span class="num__unit">gpm</span></td>
+              <td class="is-num">{{ test.rated_gpm_20|gpm:1 }}<span class="num__unit">gpm</span></td>
+              <td>
+                {% if test.capacity_class %}
+                <span class="class-chip class-chip--{{ test.capacity_class|class_slug }}">{{ test.capacity_class }}</span>
+                {% else %}<span class="dash">—</span>{% endif %}
+              </td>
+              <td class="flag">{{ test.warnings|join:", "|default:"—" }}</td>
+              <td class="mono small nowrap">{{ test.formula_version }}</td>
+              <td class="nowrap">
+                {% if test.superseded_by_id %}
+                <span class="badge badge--quiet">Superseded</span>
+                {% elif test.pk == current_test_id %}
+                <span class="badge badge--info">Current</span>
+                {% else %}
+                <span class="small">#{{ test.pk }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">No flow tests recorded.</p>
+        <p class="notice__next">
+          <a href="/hydrants/{{ hydrant.pk }}/tests/new/">Record the first flow test</a> — static and residual
+          pressures plus one pitot reading per outlet; the server computes the discharge and the rated flow.
+        </p>
+      </div>
+      {% endif %}
+      <p class="panel__note">
+        A correction supersedes the earlier row: both stay in the ledger, and the superseded row never counts
+        toward readiness.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Flow trend</h2>
+        <span class="panel__count">{{ trend_rows|length }}</span>
+        <span class="panel__meta">rated flow at {{ target_residual_psi|floatformat:0 }} psi, oldest first</span>
+      </div>
+      {% if trend_rows %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" class="is-num">Tested on</th>
+              <th scope="col" class="is-num">Rated flow</th>
+              <th scope="col" class="is-num">Change</th>
+              <th scope="col">Read</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in trend_rows %}
+            <tr class="ledger-row {% if row.test.pk == current_test_id %}ledger-row--{{ derived.readiness|readiness_slug }}{% else %}ledger-row--none{% endif %}">
+              <th scope="row" class="is-num nowrap">{{ row.test.tested_on|date:"Y-m-d" }}</th>
+              <td class="is-num">{{ row.test.rated_gpm_20|gpm:1 }}<span class="num__unit">gpm</span></td>
+              <td class="is-num">
+                {% if row.delta is None %}
+                <span class="dash">—</span>
+                {% elif row.delta < 0 %}
+                {{ row.delta|gpm:1 }}<span class="num__unit">gpm</span>
+                {% else %}
+                +{{ row.delta|gpm:1 }}<span class="num__unit">gpm</span>
+                {% endif %}
+              </td>
+              <td class="small">
+                {% if row.delta is None %}First included test
+                {% elif row.delta < 0 %}Decline against the previous test
+                {% else %}Hold or gain against the previous test{% endif %}
+                {% if row.test.pk == current_test_id %} · the test readiness is derived from{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">Nothing to trend yet.</p>
+        <p class="notice__next">The trend compares each included test with the one before it; record a second
+          flow test and the shape of the flow appears here.</p>
+      </div>
+      {% endif %}
+      <p class="panel__note">
+        Trend verdict: <strong>{{ derived.trend|trend_label }}</strong>. A decline over the district's threshold
+        is <span class="mono">DEGRADING</span>; a rated test that becomes excluded from credit is
+        <span class="mono">RATED_FLOW_LOST</span>. Corrections (superseding tests) never enter the trend.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Inspections</h2>
+        <span class="panel__count">{{ inspections|length }}</span>
+        <span class="panel__meta">append-only</span>
+      </div>
+      {% if inspections %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" class="is-num">Inspected on</th>
+              <th scope="col">Result</th>
+              <th scope="col">Codes</th>
+              <th scope="col">Inspector</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inspection in inspections %}
+            <tr class="ledger-row {% if inspection.result == 'FAIL' %}ledger-row--notready{% elif inspection.result == 'DEFICIENCY' %}ledger-row--watch{% else %}ledger-row--ready{% endif %}">
+              <th scope="row" class="is-num nowrap">{{ inspection.inspected_on|date:"Y-m-d" }}</th>
+              <td>
+                <span class="badge {% if inspection.result == 'FAIL' %}badge--notready{% elif inspection.result == 'DEFICIENCY' %}badge--watch{% else %}badge--ready{% endif %}">
+                  {{ inspection.result|result_label }}
+                </span>
+              </td>
+              <td class="mono small">{{ inspection.deficiency_codes|join:", "|default:"—" }}</td>
+              <td class="small">{{ inspection.inspector_names|default:"—" }}</td>
+              <td class="small truncate">{{ inspection.notes|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">No inspections recorded.</p>
+        <p class="notice__next">
+          <a href="/hydrants/{{ hydrant.pk }}/inspections/new/">Record the first inspection</a> — an
+          <span class="mono">OK</span> closes every open deficiency; a <span class="mono">FAIL</span> opens a
+          gating row per code.
+        </p>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Deficiencies</h2>
+        <span class="panel__count">{{ deficiencies|length }}</span>
+        <span class="panel__meta">open rows gate district credit</span>
+      </div>
+      {% if deficiencies %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Code</th>
+              <th scope="col">State</th>
+              <th scope="col">Credit</th>
+              <th scope="col" class="is-num">Opened</th>
+              <th scope="col" class="is-num">Resolved</th>
+              <th scope="col">Resolution</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for deficiency in deficiencies %}
+            <tr class="ledger-row {% if deficiency.status == 'OPEN' and deficiency.gates_credit %}ledger-row--notready{% elif deficiency.status == 'OPEN' %}ledger-row--watch{% else %}ledger-row--ready{% endif %}">
+              <th scope="row" class="mono">{{ deficiency.category }}</th>
+              <td>
+                {% if deficiency.status == "OPEN" %}
+                <span class="badge badge--watch"><span class="dot dot--watch" aria-hidden="true"></span>Open</span>
+                {% else %}
+                <span class="badge badge--ready"><span class="dot dot--ready" aria-hidden="true"></span>Resolved</span>
+                {% endif %}
+              </td>
+              <td>{% if deficiency.gates_credit %}Gating{% else %}Non-gating{% endif %}</td>
+              <td class="is-num nowrap">{{ deficiency.opened_at|date:"Y-m-d" }}</td>
+              <td class="is-num nowrap">{{ deficiency.resolved_at|date:"Y-m-d"|default:"—" }}</td>
+              <td class="small">{{ deficiency.resolution_kind|default:"—" }} · {{ deficiency.resolution_note|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">No deficiency rows.</p>
+        <p class="notice__next">A <span class="mono">FAIL</span> inspection opens one gating row per code; a later
+          <span class="mono">OK</span> closes every open row transactionally.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Status history</h2>
+        <span class="panel__count">{{ status_events|length }}</span>
+        <span class="panel__meta">append-only · attributed</span>
+      </div>
+      {% if status_events %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" class="is-num">Effective</th>
+              <th scope="col">From</th>
+              <th scope="col">To</th>
+              <th scope="col">Reason</th>
+              <th scope="col">Expected return</th>
+              <th scope="col">Recorded by</th>
+              <th scope="col">Markers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in status_events %}
+            <tr class="ledger-row ledger-row--none">
+              <th scope="row" class="is-num nowrap">{{ event.effective_on|date:"Y-m-d" }}</th>
+              <td class="small">{{ event.from_status|status_label|default:"—" }}</td>
+              <td class="nowrap"><span class="badge badge--quiet">{{ event.to_status|status_label }}</span></td>
+              <td class="small">{{ event.reason }}</td>
+              <td class="small nowrap">
+                {% if event.indefinite %}Indefinite{% else %}{{ event.expected_return_on|date:"Y-m-d"|default:"—" }}{% endif %}
+              </td>
+              <td class="small">{{ event.changed_by.username|default:"—" }}</td>
+              <td class="nowrap">
+                {% if event.pk == current_event_id %}<span class="badge badge--quiet">Current</span>{% endif %}
+                {% if event.reversal_of_id %}<span class="badge badge--quiet">Reversal</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">No status events.</p>
+        <p class="notice__next">Every hydrant gets an attributed initial status event when it is created.</p>
+      </div>
+      {% endif %}
+      <p class="panel__note">
+        The current status is the event with the latest effective date — a backdated event never silently becomes
+        the current status.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Attribute history</h2>
+        <span class="panel__count">{{ attribute_changes|length }}</span>
+        <span class="panel__meta">who changed what, and why</span>
+      </div>
+      {% if attribute_changes %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" class="is-num">When</th>
+              <th scope="col">Field</th>
+              <th scope="col">Old</th>
+              <th scope="col">New</th>
+              <th scope="col">Reason</th>
+              <th scope="col">By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for change in attribute_changes %}
+            <tr class="ledger-row ledger-row--none">
+              <th scope="row" class="is-num nowrap">{{ change.changed_at|date:"Y-m-d" }}</th>
+              <td class="mono small">{{ change.field }}</td>
+              <td class="small truncate">{{ change.old_value|default:"—" }}</td>
+              <td class="small truncate">{{ change.new_value|default:"—" }}</td>
+              <td class="small">{{ change.change_reason }}</td>
+              <td class="small">{{ change.changed_by.username|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="notice">
+        <p class="notice__title">No attribute changes.</p>
+        <p class="notice__next">Edits through the form and imports write a row here with the old value, the new
+          value and the reason.</p>
+      </div>
+      {% endif %}
+    </section>
+
+  </div>
+
+  <aside class="stack">
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Attributes</h2></div>
+      <div class="props">
+        <div class="prop">
+          <span class="prop__k">Service status</span>
+          <span class="prop__v">
+            <span class="badge badge--quiet">{{ hydrant.status|status_label }}</span>
+          </span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Readiness</span>
+          <span class="prop__v">{{ derived.readiness|readiness_label }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Rated at {{ target_residual_psi|floatformat:0 }} psi</span>
+          <span class="prop__v num">{{ derived.rated_gpm_20|gpm:1 }}<span class="num__unit">gpm</span></span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Capacity class</span>
+          <span class="prop__v">
+            {% if derived.capacity_class %}
+            <span class="class-chip class-chip--{{ derived.capacity_class|class_slug }}">{{ derived.capacity_class }}</span>
+            {% else %}<span class="dash">—</span>{% endif %}
+          </span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Flow-test recency</span>
+          <span class="prop__v">{{ derived.test_recency_flag|recency_label }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Inspection recency</span>
+          <span class="prop__v">{{ derived.inspection_recency_flag|recency_label }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Last test</span>
+          <span class="prop__v num">{{ derived.latest_tested_on|date:"Y-m-d"|default:"—" }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Last inspection</span>
+          <span class="prop__v num">{{ derived.latest_inspected_on|date:"Y-m-d"|default:"—" }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Owner</span>
+          <span class="prop__v">{{ hydrant.ownership|default:"—" }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Source organization</span>
+          <span class="prop__v">{{ hydrant.source_org|default:"—" }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Manufacturer</span>
+          <span class="prop__v">{{ hydrant.manufacturer|default:"—" }} {{ hydrant.model|default:"" }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Installed</span>
+          <span class="prop__v num">{{ hydrant.year_installed|default:"—" }}</span>
+        </div>
+        <div class="prop">
+          <span class="prop__k">Main size</span>
+          <span class="prop__v num">{{ hydrant.main_size_inches|default:"—" }}<span class="num__unit">in</span></span>
+        </div>
+      </div>
+      {% if hydrant.notes %}
+      <p class="panel__note">{{ hydrant.notes }}</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Move the service status</h2>
+        <span class="panel__meta">attributed event</span>
+      </div>
+      {% if can_write %}
+      <form class="panel__body stack--tight" id="status-event-form" method="post"
+            action="/api/v1/hydrants/{{ hydrant.pk }}/status-events/">
+        {% csrf_token %}
+        <div class="field">
+          <label class="field__label" for="status_to">Move to</label>
+          <select class="select" id="status_to" name="to_status">
+            {% for option in status_options %}
+            <option value="{{ option.value }}"{% if option.reason_required %} data-reason-required="true"{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
+          <p class="field__hint" id="status-target-hint"></p>
+        </div>
+        <div class="field-row" id="status-oos-fields"{% if default_status_target != "OUT_OF_SERVICE" %} hidden{% endif %}>
+          <div class="field">
+            <label class="field__label" for="status_expected_return_on">Expected return</label>
+            <input class="input" type="date" id="status_expected_return_on" name="expected_return_on">
+          </div>
+          <div class="field">
+            <label class="check" for="status_indefinite">
+              <input type="checkbox" id="status_indefinite" name="indefinite">
+              <span>Indefinite — no return date is known</span>
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="status_reason">
+            Reason <span class="field__req" id="status-reason-req">optional</span>
+          </label>
+          <input class="input" id="status_reason" name="reason" maxlength="255">
+          <p class="field__hint" id="status-reason-hint">Written into the event row with your name.</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="status_effective_on">Effective on <span class="field__req">optional</span></label>
+          <input class="input" type="date" id="status_effective_on" name="effective_on">
+          <p class="field__hint">Defaults to today; a backdated event keeps its place in the history.</p>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn" id="submit-status-event">Record status event</button>
+          <span class="small" id="status-event-status" role="status"></span>
+        </div>
+      </form>
+
+      {% if reversal_event_id %}
+      <form class="panel__body stack--tight" id="status-reversal-form" method="post" data-async
+            data-async-done="reload" data-async-ok="Reversal recorded."
+            action="/api/v1/hydrants/{{ hydrant.pk }}/status-events/">
+        {% csrf_token %}
+        <input type="hidden" name="reversal_of" value="{{ reversal_event_id }}">
+        <div class="field">
+          <label class="field__label" for="reversal_reason">Reverse the latest event</label>
+          <input class="input" id="reversal_reason" name="reason" maxlength="255" required
+                 placeholder="What was wrong with the event?">
+          <p class="field__hint">
+            A reversal restores the status the event replaced. It cannot itself be reversed — record a further
+            forward event instead.
+          </p>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn--secondary" data-async-busy="Reversing…">Reverse this event</button>
+          <span class="small" id="reversal-status" data-async-status role="status"></span>
+        </div>
+      </form>
+      {% endif %}
+
+      {% else %}
+      <div class="panel__body">
+        <p class="small">Your role is read-only. Moving the service status needs the
+          <span class="mono">editor</span> role or above.</p>
+      </div>
+      {% endif %}
+      <p class="panel__note">
+        Six transitions exist; only the legal ones from the current status are offered. A closure past its
+        expected return is flagged on the dashboard — it is never auto-reverted.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Map</h2></div>
+      <div class="panel__body">
+        <div class="map-shell">
+          <div class="map" id="map" data-lat="{{ hydrant.lat }}" data-lon="{{ hydrant.lon }}"
+               data-label="{{ hydrant.asset_tag }}" data-tile="{{ map_tile_url }}"
+               data-credit-radius-m="{{ credit_radius_m }}"></div>
+        </div>
+        {% if not map_tile_url %}
+        <p class="field__hint" id="credit-radius-note">
+          No basemap tile URL is configured (<span class="mono">MAP_TILE_URL</span> is empty), so the map renders
+          the graticule and the district overlay only. The circle is the {{ credit_radius_ft|floatformat:0 }} ft
+          credit radius.
+        </p>
+        {% else %}
+        <p class="field__hint" id="credit-radius-note">The circle is the
+          {{ credit_radius_ft|floatformat:0 }} ft credit radius.</p>
+        {% endif %}
+      </div>
+    </section>
+
+  </aside>
+</div>
+
+{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'ledger/map.js' %}"></script>
+<script src="{% static 'ledger/statusform.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% load static ui %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}HydrantProof{% endblock %}</title>
+<script>
+/* The theme is an operator choice, applied before first paint so the page
+   never flashes the wrong paper. Absent choice = the OS preference (the
+   stylesheet's media query); present = the explicit data-theme attribute. */
+(function () {
+  try {
+    var stored = window.localStorage.getItem("hydrantproof.theme");
+    if (stored === "light" || stored === "dark") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (error) { /* storage blocked: follow the OS */ }
+})();
+</script>
+<link rel="stylesheet" href="{% static 'ledger/tokens.css' %}">
+<link rel="stylesheet" href="{% static 'ledger/app.css' %}">
+{% block head %}{% endblock %}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="shell">
+
+  <header class="rail">
+    <a class="rail__brand" href="/dashboard/">
+      {% include "ledger/_mark.html" %}
+      <span class="rail__word">HydrantProof</span>
+    </a>
+
+    <nav class="nav" aria-label="Primary">
+      <a class="nav__link" href="/dashboard/"{% if nav_section == "dashboard" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="board" class="nav__icon" %}<span>Dashboard</span>
+      </a>
+      <a class="nav__link" href="/hydrants/"{% if nav_section == "hydrants" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="hydrant" class="nav__icon" %}<span>Hydrants</span>
+      </a>
+      <a class="nav__link" href="/parcels/"{% if nav_section == "parcels" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="parcel" class="nav__icon" %}<span>Parcels</span>
+      </a>
+      <a class="nav__link" href="/coverage/"{% if nav_section == "coverage" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="coverage" class="nav__icon" %}<span>Coverage</span>
+      </a>
+      <a class="nav__link" href="/packs/"{% if nav_section == "packs" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="pack" class="nav__icon" %}<span>Evidence packs</span>
+      </a>
+      <a class="nav__link" href="/exports/"{% if nav_section == "exports" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="export" class="nav__icon" %}<span>Exports</span>
+      </a>
+      <a class="nav__link" href="/field/"{% if nav_section == "field" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="field" class="nav__icon" %}<span>Field capture</span>
+      </a>
+      <a class="nav__link" href="/guide/"{% if nav_section == "guide" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="info" class="nav__icon" %}<span>How it works</span>
+      </a>
+      <a class="nav__link" href="/settings/"{% if nav_section == "settings" %} aria-current="page"{% endif %}>
+        {% include "ledger/_icon.html" with name="settings" class="nav__icon" %}<span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="rail__foot">
+      <p class="rail__who">
+        <span class="rail__who-label">Signed in</span>
+        <span class="rail__who-name">{{ user.username }}</span>
+      </p>
+      <button type="button" class="btn btn--ghost btn--sm rail__action" id="theme-toggle" aria-pressed="false">
+        {% include "ledger/_icon.html" with name="theme" class="nav__icon" %}
+        <span id="theme-toggle-label">Dark theme</span>
+      </button>
+      <form class="rail__action" method="post" action="/logout/">{% csrf_token %}
+        <button type="submit" class="btn btn--ghost btn--sm">Sign out</button>
+      </form>
+    </div>
+  </header>
+
+  <div class="shell__body">
+
+    {% if sample_data_banner %}
+    <div class="banner banner--sample" role="status">
+      {% include "ledger/_icon.html" with name="alert" class="banner__icon" %}
+      <div class="banner__body">
+        <strong>Sample data is loaded.</strong>
+        Recording any real (non-sample) row deactivates every published demo account in the same transaction —
+        a published password must never guard real data.
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="banner banner--preview" id="preview-banner" role="status" hidden>
+      {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+      <div class="banner__body"><span id="preview-banner-text"></span></div>
+    </div>
+
+    <main id="main" class="main" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <p class="small">{{ artifact_label }}</p>
+      <p class="small">{{ provisional_banner }}</p>
+    </footer>
+
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>
+
+<div class="modal" id="confirm-modal" hidden>
+  <div class="modal__backdrop" data-modal-dismiss></div>
+  <div class="modal__panel" role="dialog" aria-modal="true"
+       aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-body">
+    <h2 class="modal__title" id="confirm-modal-title">Confirm</h2>
+    <p class="modal__body" id="confirm-modal-body"></p>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--ghost" data-modal-dismiss>Cancel</button>
+      <button type="button" class="btn" id="confirm-modal-accept">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'ledger/preview-bootstrap.js' %}"></script>
+<script src="{% static 'ledger/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

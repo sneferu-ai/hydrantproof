@@ -1,0 +1,171 @@
+{% extends "ledger/base.html" %}
+{% load static %}
+{% block title %}Field capture — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">At the hydrant</p>
+    <h1 class="page-head__title">Field capture</h1>
+    <p class="page-head__sub">
+      Record a flow test from the truck. With a connection it submits through the same route as the office form;
+      without one it queues on the device and syncs when the signal comes back.
+    </p>
+  </div>
+</div>
+
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Field capture is proof of records, not proof of presence.</strong>
+    Browser geolocation and photos are client-asserted, EXIF is stripped on upload, and no device attestation or
+    cryptographic signature exists. Queued submissions replay idempotently by <span class="mono">client_uuid</span>.
+  </div>
+</div>
+
+<div class="stack">
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Reading</h2>
+      <span class="panel__meta">static, residual, one pitot reading per outlet</span>
+    </div>
+    <form class="panel__body" id="capture-form" novalidate>
+      {% csrf_token %}
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label" for="hydrant">Hydrant</label>
+          <select class="select" name="hydrant" id="hydrant" required>
+            <option value="">— select —</option>
+            {% for hydrant in hydrants %}
+            <option value="{{ hydrant.pk }}" data-asset-tag="{{ hydrant.asset_tag }}">{{ hydrant.asset_tag }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label" for="tested_on">Tested on</label>
+          <input class="input" type="date" name="tested_on" id="tested_on" required>
+        </div>
+        <div class="field">
+          <label class="field__label" for="static_psi">Static pressure</label>
+          <input class="input input--num" type="number" step="0.01" min="0" max="{{ max_static_psi }}" name="static_psi" id="static_psi" required inputmode="decimal">
+          <p class="field__hint">psi</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="residual_psi">Residual pressure</label>
+          <input class="input input--num" type="number" step="0.01" min="0" max="{{ max_static_psi }}" name="residual_psi" id="residual_psi" required inputmode="decimal">
+          <p class="field__hint">psi</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="measured_total_gpm">Meter total <span class="field__req">optional</span></label>
+          <input class="input input--num" type="number" step="0.1" min="0" name="measured_total_gpm" id="measured_total_gpm" inputmode="decimal">
+          <p class="field__hint">gpm — authoritative when present</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="outlet-table">
+          <thead>
+            <tr>
+              <th scope="col" class="is-num">#</th>
+              <th scope="col">Diameter (in)</th>
+              <th scope="col">Coefficient</th>
+              <th scope="col">Pitot (psi)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for index in "0123" %}
+            <tr>
+              <th scope="row" class="is-num">{{ forloop.counter }}</th>
+              <td>
+                <input class="input input--num" type="number" step="0.01" min="0.01" max="12"
+                       value="{% if forloop.first %}2.5{% endif %}"
+                       data-outlet="diameter" data-index="{{ forloop.counter0 }}"
+                       aria-label="Outlet {{ forloop.counter }} diameter in inches" inputmode="decimal">
+              </td>
+              <td>
+                <input class="input input--num" type="number" step="0.01" min="0.01" max="1"
+                       value="{% if forloop.first %}0.90{% endif %}"
+                       data-outlet="coefficient" data-index="{{ forloop.counter0 }}"
+                       aria-label="Outlet {{ forloop.counter }} discharge coefficient" inputmode="decimal">
+              </td>
+              <td>
+                <input class="input input--num" type="number" step="0.01" min="0" max="{{ max_pitot_psi }}"
+                       data-outlet="pitot" data-index="{{ forloop.counter0 }}"
+                       aria-label="Outlet {{ forloop.counter }} pitot pressure in psi" inputmode="decimal">
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn--secondary btn--sm" id="gps">Capture GPS</button>
+        <span class="small" id="gps-readout">No position captured.</span>
+      </div>
+
+      <div class="dropzone">
+        <label class="field__label" for="photo">Gauge or nameplate photo <span class="field__req">optional</span></label>
+        <input type="file" id="photo" accept="image/*">
+        <p class="field__hint">JPEG, PNG or WebP, ≤ 5 MB. Stripped of EXIF on upload; the capture timestamp is kept as metadata.</p>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn" id="submit-online">Submit now</button>
+        <button type="button" class="btn btn--secondary" id="queue-offline">Queue for later</button>
+        <button type="button" class="btn btn--ghost" id="export-csv">Export queued readings as CSV</button>
+      </div>
+      <p class="field__hint">
+        The CSV export carries the queued readings in the historical-import column format so any connected
+        workstation can import them. <strong>Photos do not survive the CSV path.</strong>
+      </p>
+      <p class="small" id="status" role="status"></p>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Queued submissions</h2>
+      <span class="panel__meta">on this device only</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table" id="queue-table">
+        <thead>
+          <tr><th scope="col">Hydrant</th><th scope="col">Tested on</th><th scope="col">Captured at</th><th scope="col">GPS accuracy</th></tr>
+        </thead>
+        <tbody id="queue-body"></tbody>
+      </table>
+    </div>
+    <p class="panel__note">
+      The queue lives in this browser's IndexedDB. Clearing site data clears it — export the CSV before wiping
+      the browser.
+    </p>
+  </section>
+
+  <section class="panel" id="relogin" hidden>
+    <div class="panel__head"><h2 class="panel__title">Sign in to sync</h2></div>
+    <div class="panel__body">
+      <p class="small" id="relogin-note">Session expired — sign in to sync the queue.</p>
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label" for="relogin-username">Username</label>
+          <input class="input" type="text" id="relogin-username" autocomplete="username">
+        </div>
+        <div class="field">
+          <label class="field__label" for="relogin-password">Password</label>
+          <input class="input" type="password" id="relogin-password" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="relogin-submit">Sign in and sync</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'ledger/field.js' %}"></script>
+{% endblock %}

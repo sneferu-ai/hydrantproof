@@ -1,0 +1,105 @@
+{% extends "ledger/base.html" %}
+{% load ui %}
+{% block title %}District settings — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Configuration</p>
+    <h1 class="page-head__title">District settings</h1>
+    <p class="page-head__sub">
+      These are the parameters every derivation and every coverage run reads. Changing one is an administrative
+      act: it is written to the settings audit with the old value, the new value and the operator.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    {% if is_admin %}
+    <a class="btn btn--secondary" href="/admin/ledger/districtsettings/">Open in the admin</a>
+    {% else %}
+    <span class="btn btn--secondary" aria-disabled="true" title="Administrator role required">Open in the admin</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>This page is read-only, deliberately.</strong>
+    <span class="mono">PATCH /api/v1/settings/</span> answers <span class="mono">405</span>: settings mutations are
+    the Django admin's designated route, so there is exactly one door and one audit trail. The values below are
+    what the engine is using right now.
+  </div>
+</div>
+
+<div class="grid grid--2">
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Identity</h2></div>
+    <div class="props">
+      <div class="prop"><span class="prop__k">District name</span><span class="prop__v">{{ district.name }}</span></div>
+      <div class="prop"><span class="prop__k">ISO community id</span><span class="prop__v mono">{{ district.iso_community_id|default:"—" }}</span></div>
+      <div class="prop"><span class="prop__k">State</span><span class="prop__v">{{ district.state|default:"—" }}</span></div>
+      <div class="prop"><span class="prop__k">Time zone</span><span class="prop__v mono">{{ district.time_zone }}</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Windows</h2><span class="panel__meta">independent cadences</span></div>
+    <div class="props">
+      {% for key, label, unit, low, high, note in windows %}
+      <div class="prop">
+        <span class="prop__k">{{ label }}</span>
+        <span class="prop__v num">{{ district|dict_get:key }}<span class="num__unit">{{ unit }}</span></span>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="panel__note">Flow tests and inspections age on separate windows, because they do: a district may test
+      annually and inspect on a different cadence without either number becoming a lie.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">Worksheet policy</h2></div>
+    <div class="props">
+      {% for key, label, unit, low, high, note in policy %}
+      <div class="prop">
+        <span class="prop__k">{{ label }}</span>
+        <span class="prop__v num">{{ district|dict_get:key }}<span class="num__unit">{{ unit }}</span></span>
+      </div>
+      {% endfor %}
+      <div class="prop">
+        <span class="prop__k">Sub-target residual tests</span>
+        <span class="prop__v">{% if district.exclude_residual_below_target %}Excluded from credit{% else %}Credited (default){% endif %}</span>
+      </div>
+    </div>
+    <p class="panel__note">A run freezes these values into its own record, so a later change never rewrites an
+      earlier worksheet — it only makes the run stale, visibly.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2 class="panel__title">What each number does</h2></div>
+    <div class="panel__body">
+      {% for key, label, unit, low, high, note in windows %}
+      <p class="small"><strong>{{ label }}.</strong> {{ note }} <span class="muted">({{ low }}–{{ high }} {{ unit }}.)</span></p>
+      {% endfor %}
+      {% for key, label, unit, low, high, note in policy %}
+      <p class="small"><strong>{{ label }}.</strong> {{ note }} <span class="muted">({{ low }}–{{ high }} {{ unit }}.)</span></p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel__head"><h2 class="panel__title">Constants this build pins</h2><span class="panel__meta">code, not policy</span></div>
+  <div class="panel__body">
+    <p class="small">
+      The NFPA 291 arithmetic is fixed in code: discharge constant
+      <span class="mono">29.83</span>, target residual <span class="mono">20 psi</span>, drop exponent
+      <span class="mono">0.54</span>, formula version <span class="mono">nfpa291-pct-drop-v1</span>.
+      The coefficient presets, the extrapolation ceiling, the trend threshold, the distribution bands and the
+      flow-band proxy are provisional and verification-gated — every pack prints the provisional banner, and the
+      district is told to verify them against a licensed NFPA 291 edition before submitting to a surveyor.
+    </p>
+  </div>
+  <p class="panel__note">{{ provisional_banner }}</p>
+</section>
+
+{% endblock %}

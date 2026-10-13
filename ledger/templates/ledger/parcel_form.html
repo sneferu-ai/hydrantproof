@@ -1,0 +1,178 @@
+{% extends "ledger/base.html" %}
+{% load static %}
+{% block title %}Edit {{ parcel.parcel_id }} — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">Worksheet inputs · parcel #{{ parcel.pk }}</p>
+    <h1 class="page-head__title">Edit {{ parcel.parcel_id }}</h1>
+    <p class="page-head__sub">
+      The parcel id and the source record are the assessor's and do not change here. What the district can
+      correct is the address, the structure, and — on a large rural lot where the centroid can sit more than
+      {{ district.credit_radius_ft|floatformat:"0" }} ft from the front door — the point coverage is measured
+      from.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--ghost" href="/parcels/{{ parcel.pk }}/">Cancel</a>
+  </div>
+</div>
+
+{% if not can_write %}
+<div class="banner banner--info" role="status">
+  {% include "ledger/_icon.html" with name="info" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>Your role is read-only.</strong> Editing a parcel needs the
+    <span class="mono">editor</span> role or above; the controls below are disabled.
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid--wide-left">
+  <form class="stack" id="parcel-form" method="post" action="/api/v1/parcels/{{ parcel.pk }}/"
+        data-parcel-id="{{ parcel.pk }}" novalidate>
+    {% csrf_token %}
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">Structure</h2><span class="panel__meta">what sits on the parcel</span></div>
+      <div class="panel__body">
+        <div class="field">
+          <label class="field__label" for="address">Address <span class="field__req">optional</span></label>
+          <input class="input" id="address" name="address" maxlength="255"
+                 value="{{ parcel.address|default:'' }}" {% if not can_write %}disabled{% endif %}>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="structure_type">Structure type <span class="field__req">optional</span></label>
+            <input class="input" id="structure_type" name="structure_type" maxlength="64"
+                   value="{{ parcel.structure_type|default:'' }}" placeholder="e.g. single-family dwelling"
+                   {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="check" for="is_protected_structure">
+              <input type="checkbox" id="is_protected_structure" name="is_protected_structure"
+                     {% if parcel.is_protected_structure %}checked{% endif %} {% if not can_write %}disabled{% endif %}>
+              <span>Protected structure — a row of the water-supply worksheet</span>
+            </label>
+            <p class="field__hint">Unticked, the parcel stays in the register but is excluded from coverage, so the
+              district can keep a complete assessor extract without inflating its protected count.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Structure point</h2>
+        <span class="panel__meta">the override — where coverage is actually measured from</span>
+      </div>
+      <div class="panel__body">
+        <div class="map-shell">
+          <div class="map" id="pin-map"
+               data-lat-input="structure_lat" data-lon-input="structure_lon"
+               data-ref-lat="{{ parcel.lat }}" data-ref-lon="{{ parcel.lon }}"
+               data-tile="{{ map_tile_url }}"></div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn--secondary btn--sm" id="use-location"
+                  {% if not can_write %}disabled{% endif %}>Use my location</button>
+          <span class="small" id="geo-readout">No position captured from this device.</span>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="structure_lat">Structure latitude</label>
+            <input class="input input--num" id="structure_lat" name="structure_lat" type="number"
+                   step="0.0000001" min="-80" max="80" value="{{ parcel.structure_lat|default:'' }}"
+                   {% if parcel.structure_lat is None or not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="structure_lon">Structure longitude</label>
+            <input class="input input--num" id="structure_lon" name="structure_lon" type="number"
+                   step="0.0000001" min="-180" max="180" value="{{ parcel.structure_lon|default:'' }}"
+                   {% if parcel.structure_lat is None or not can_write %}disabled{% endif %}>
+          </div>
+        </div>
+        <div class="field">
+          <label class="check" for="no_override">
+            <input type="checkbox" id="no_override" name="no_override"
+                   {% if parcel.structure_lat is None %}checked{% endif %} {% if not can_write %}disabled{% endif %}>
+            <span>No structure override — measure from the assessor centroid (the open circle)</span>
+          </label>
+          <p class="field__hint">
+            The two coordinates are set together or not at all — the API refuses a lone latitude or longitude,
+            and every change is written to the parcel attribute history.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Centroid</h2>
+        <span class="panel__meta">from the assessor import — edit only to correct bad source data</span>
+      </div>
+      <div class="panel__body">
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="lat">Centroid latitude</label>
+            <input class="input input--num" id="lat" name="lat" type="number" step="0.0000001"
+                   min="-80" max="80" value="{{ parcel.lat }}" required {% if not can_write %}disabled{% endif %}>
+          </div>
+          <div class="field">
+            <label class="field__label" for="lon">Centroid longitude</label>
+            <input class="input input--num" id="lon" name="lon" type="number" step="0.0000001"
+                   min="-180" max="180" value="{{ parcel.lon }}" required {% if not can_write %}disabled{% endif %}>
+          </div>
+        </div>
+        <p class="field__hint">
+          The centroid is the fallback measuring point for every parcel without an override. A wrong centroid
+          belongs back in the assessor's file too — the next import will carry the correction.
+        </p>
+      </div>
+    </section>
+
+    <div class="btn-row">
+      <button type="submit" class="btn" id="submit-parcel"
+              {% if not can_write %}disabled aria-disabled="true" title="Read-only role"{% endif %}>Save parcel</button>
+      <a class="btn btn--ghost" href="/parcels/{{ parcel.pk }}/">Cancel</a>
+      <span class="small" id="submit-status" role="status"></span>
+    </div>
+
+    <div id="success-panel" hidden></div>
+  </form>
+
+  <aside class="stack">
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">What this writes</h2></div>
+      <div class="panel__body">
+        <p class="small">A <span class="mono">PATCH</span> to
+          <span class="mono">/api/v1/parcels/{{ parcel.pk }}/</span>. Every changed field is written to the
+          parcel attribute history with the old value, the new value and the operator who made it.</p>
+        <p class="small">Saving does <strong>not</strong> move the worksheet: a coverage run is frozen the
+          moment it completes. <a href="/coverage/">Recompute coverage</a> for the new point to take effect —
+          the stale-run banner will say so until then.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title">The bulk alternative</h2></div>
+      <div class="panel__body">
+        <p class="small">Overrides for a whole street are faster as a corrected re-import: the parcel CSV carries
+          <span class="mono">structure_lat</span> / <span class="mono">structure_lon</span> columns, and the
+          two-phase import dry-runs before it commits.</p>
+        <p class="small">The import history is an API read
+          (<a class="mono" href="/api/v1/imports/">GET /api/v1/imports/</a>) ·
+          <a href="/static/ledger/import_templates/parcels.csv">download the parcel template</a></p>
+      </div>
+    </section>
+  </aside>
+</div>
+
+{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'ledger/pinmap.js' %}"></script>
+<script src="{% static 'ledger/parcelform.js' %}"></script>
+{% endblock %}

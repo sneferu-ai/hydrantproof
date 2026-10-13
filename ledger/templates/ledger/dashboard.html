@@ -1,0 +1,365 @@
+{% extends "ledger/base.html" %}
+{% load ui %}
+{% block title %}Readiness — HydrantProof{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head__text">
+    <p class="page-head__eyebrow">{{ district.name }} · {{ today|date:"Y-m-d" }}</p>
+    <h1 class="page-head__title">Water-supply readiness</h1>
+    <p class="page-head__sub">
+      Every hydrant the district depends on, one square each, with the exceptions ranked below. A square is a
+      readiness state, not a judgement — the flags that produced it are named in every table.
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="/hydrants/new/">Add hydrant</a>
+    <a class="btn btn--secondary" href="/coverage/">Run the worksheet</a>
+  </div>
+</div>
+
+{% if coverage_staleness.stale %}
+<div class="banner banner--stale" role="status">
+  {% include "ledger/_icon.html" with name="alert" class="banner__icon" %}
+  <div class="banner__body">
+    <strong>The water-supply worksheet is stale.</strong>
+    Coverage run #{{ latest_run.pk }} ({{ latest_run.snapshot_ts|date:"Y-m-d" }}) no longer matches the district's
+    settings: {{ coverage_staleness.reasons|join:"; " }}. <a href="/coverage/">Run coverage again</a>.
+  </div>
+</div>
+{% endif %}
+
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Readiness board</h2>
+    <span class="panel__count">{{ hydrant_count }}</span>
+    <span class="panel__meta">one square per hydrant</span>
+  </div>
+  <div class="board-wrap">
+    {% if board %}
+    <div class="board" data-roving>
+      {% for hydrant, derived in board %}
+      <a class="board__pip board__pip--{{ derived.readiness|readiness_slug }}"
+         href="/hydrants/{{ hydrant.pk }}/" data-tag="{{ hydrant.asset_tag }}"
+         aria-label="{{ hydrant.asset_tag }} — {{ derived.readiness|readiness_label }}"></a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="notice">
+      <p class="notice__title">No hydrants yet.</p>
+      <p class="notice__next">
+        Import an inventory CSV through the two-phase import, or
+        <a href="/hydrants/new/">add the first hydrant</a> and drop its pin on the map.
+      </p>
+    </div>
+    {% endif %}
+    <p class="board__readout" data-board-readout aria-hidden="true">Hover or focus a square for the asset tag.</p>
+  </div>
+  <ul class="board-legend">
+    <li class="board-legend__item board-legend__item--ready">
+      <span class="board-legend__token">READY</span>
+      <span class="board-legend__count">{{ readiness_counts.READY }}</span>
+      <span class="small">serviceable, inside every window</span>
+    </li>
+    <li class="board-legend__item board-legend__item--watch">
+      <span class="board-legend__token">WATCH</span>
+      <span class="board-legend__count">{{ readiness_counts.WATCH }}</span>
+      <span class="small">degrading flow, a window closing, a non-gating deficiency</span>
+    </li>
+    <li class="board-legend__item board-legend__item--notready">
+      <span class="board-legend__token">NOT_READY</span>
+      <span class="board-legend__count">{{ readiness_counts.NOT_READY }}</span>
+      <span class="small">at least one gating flag applies</span>
+    </li>
+  </ul>
+  <div class="board-wrap">
+    <div class="bar" role="img"
+         aria-label="{{ readiness_counts.READY }} ready, {{ readiness_counts.WATCH }} watch, {{ readiness_counts.NOT_READY }} not ready of {{ hydrant_count }}">
+      <span class="bar__seg bar__seg--ready" style="width: {{ readiness_counts.READY|pct:hydrant_count }}%"></span>
+      <span class="bar__seg bar__seg--watch" style="width: {{ readiness_counts.WATCH|pct:hydrant_count }}%"></span>
+      <span class="bar__seg bar__seg--notready" style="width: {{ readiness_counts.NOT_READY|pct:hydrant_count }}%"></span>
+    </div>
+  </div>
+  <p class="panel__note">
+    Arrow keys walk the board; the line above the note names the square you are on. Readiness is derived from the
+    frozen windows — a hydrant is never marked from colour alone.
+  </p>
+</section>
+
+<div class="grid grid--2">
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Expired out-of-service</h2>
+      <span class="panel__count">{{ expired_oos|length }}</span>
+      <span class="panel__meta">never auto-reverted</span>
+    </div>
+    {% if expired_oos %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Hydrant</th>
+            <th scope="col" class="is-num">Days past return</th>
+            <th scope="col">Acknowledgement</th>
+            <th scope="col"><span class="visually-hidden">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for hydrant, derived in expired_oos %}
+          <tr class="ledger-row ledger-row--notready">
+            <th scope="row"><a href="/hydrants/{{ hydrant.pk }}/">{{ hydrant.asset_tag }}</a></th>
+            <td class="is-num">{{ derived.days_past_expiry }}</td>
+            <td>
+              {% if derived.oos_acknowledged_active %}
+              <span class="badge badge--watch"><span class="dot dot--watch" aria-hidden="true"></span>Acknowledged</span>
+              {% else %}
+              <span class="badge badge--notready"><span class="dot dot--notready" aria-hidden="true"></span>Unacknowledged</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not derived.oos_acknowledged_active %}
+              <form class="inline ack-form" method="post" data-async data-async-done="mark"
+                    data-async-ok="Expiry acknowledged."
+                    data-async-badge=".badge" data-async-badge-text="Acknowledged"
+                    action="/api/v1/hydrants/{{ hydrant.pk }}/oos-acknowledgements/">
+                {% csrf_token %}
+                <input type="hidden" name="note" value="Acknowledged from the readiness board">
+                <button type="submit" class="btn btn--secondary btn--sm" data-async-busy="Recording…">Acknowledge</button>
+                <span class="small" id="ack-status-{{ hydrant.pk }}" data-async-status role="status"></span>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="notice">
+      <p class="notice__title">No expired out-of-service hydrants.</p>
+      <p class="notice__next">A hydrant whose expected return date passes is flagged here and escalated — the
+        district acknowledges it or puts it back in service.</p>
+    </div>
+    {% endif %}
+    <p class="panel__note">Acknowledging does not change the hydrant's status. The expiry stays visible until a
+      status event closes it.</p>
+  </section>
+
+</div>
+
+{# The working queue stands alone at the full working width: its rows carry the resolve form, the one action the board exists to feed. #}
+{# Inside a three-up grid cell the action column started entirely off-screen (measured 2026-10-04: a 455 px table in a 318 px panel, the Resolve cell 0 px visible). The row order around it is unchanged. #}
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">Open deficiencies</h2>
+    <span class="panel__count">{{ open_deficiencies|length }}</span>
+    <span class="panel__meta">gating rows block district credit</span>
+  </div>
+  {% if open_deficiencies %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Hydrant</th>
+            <th scope="col">Code</th>
+            <th scope="col">Credit</th>
+            <th scope="col">Assigned</th>
+            <th scope="col">Due</th>
+            <th scope="col">Resolve</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for deficiency in open_deficiencies %}
+          <tr class="ledger-row {% if deficiency.gates_credit %}ledger-row--notready{% else %}ledger-row--watch{% endif %}">
+            <th scope="row"><a href="/hydrants/{{ deficiency.hydrant.pk }}/">{{ deficiency.hydrant.asset_tag }}</a></th>
+            <td class="mono">{{ deficiency.category }}</td>
+            <td>
+              {% if deficiency.gates_credit %}
+              <span class="badge badge--notready"><span class="dot dot--notready" aria-hidden="true"></span>Gating</span>
+              {% else %}
+              <span class="badge badge--quiet">Non-gating</span>
+              {% endif %}
+            </td>
+            <td class="small">{{ deficiency.assigned_to|default:"—" }}</td>
+            <td class="small">{{ deficiency.due_on|date:"Y-m-d"|default:"—" }}</td>
+            <td class="resolve-cell">
+              <form class="inline resolve-form" method="post" data-async data-async-done="remove"
+                    data-async-ok="Deficiency resolved."
+                    data-async-empty="No open deficiencies — the queue is clear."
+                    data-async-count=".panel__count"
+                    action="/api/v1/hydrants/{{ deficiency.hydrant.pk }}/deficiencies/{{ deficiency.pk }}/resolve/">
+                {% csrf_token %}
+                <input class="input" type="text" name="resolution_note" maxlength="255" required
+                       id="resolve-note-{{ deficiency.pk }}"
+                       aria-label="Resolution note for {{ deficiency.category }} on {{ deficiency.hydrant.asset_tag }}">
+                <button type="submit" class="btn btn--secondary btn--sm" data-async-busy="Resolving…">Resolve</button>
+                <span class="small" id="resolve-status-{{ deficiency.pk }}" data-async-status role="status"></span>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+  <div class="notice">
+    <p class="notice__title">No open deficiencies.</p>
+    <p class="notice__next">A <span class="mono">FAIL</span> inspection opens a gating row per code; a later
+      <span class="mono">OK</span> closes every open row automatically.</p>
+  </div>
+  {% endif %}
+  <p class="panel__note">The resolution note is required and is written into the row with your name.</p>
+</section>
+
+<div class="grid grid--2">
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Ranked overdue tests</h2>
+      <span class="panel__count">{{ overdue_tests|length }}</span>
+      <span class="panel__meta">longest first</span>
+    </div>
+    {% if overdue_tests %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Hydrant</th>
+            <th scope="col" class="is-num">Days overdue</th>
+            <th scope="col">Readiness</th>
+            <th scope="col">Gating flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for hydrant, derived in overdue_tests %}
+          <tr class="ledger-row ledger-row--{{ derived.readiness|readiness_slug }}">
+            <th scope="row"><a href="/hydrants/{{ hydrant.pk }}/">{{ hydrant.asset_tag }}</a></th>
+            <td class="is-num">{{ derived.days_test_overdue }}</td>
+            <td>
+              <span class="badge badge--{{ derived.readiness|readiness_slug }}">
+                <span class="dot dot--{{ derived.readiness|readiness_slug }}" aria-hidden="true"></span>{{ derived.readiness|readiness_label }}
+              </span>
+            </td>
+            <td class="flag">{{ derived.gating_flags|join:", "|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="notice">
+      <p class="notice__title">No overdue tests.</p>
+      <p class="notice__next">Every in-service hydrant has a flow test inside the district's window.</p>
+    </div>
+    {% endif %}
+    <p class="panel__note">Days overdue are measured from the district's flow-test window, not from a calendar year.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Ranked overdue inspections</h2>
+      <span class="panel__count">{{ overdue_inspections|length }}</span>
+      <span class="panel__meta">longest first</span>
+    </div>
+    {% if overdue_inspections %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Hydrant</th>
+            <th scope="col" class="is-num">Days overdue</th>
+            <th scope="col">Readiness</th>
+            <th scope="col">Gating flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for hydrant, derived in overdue_inspections %}
+          <tr class="ledger-row ledger-row--{{ derived.readiness|readiness_slug }}">
+            <th scope="row"><a href="/hydrants/{{ hydrant.pk }}/">{{ hydrant.asset_tag }}</a></th>
+            <td class="is-num">{{ derived.days_inspection_overdue }}</td>
+            <td>
+              <span class="badge badge--{{ derived.readiness|readiness_slug }}">
+                <span class="dot dot--{{ derived.readiness|readiness_slug }}" aria-hidden="true"></span>{{ derived.readiness|readiness_label }}
+              </span>
+            </td>
+            <td class="flag">{{ derived.gating_flags|join:", "|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="notice">
+      <p class="notice__title">No overdue inspections.</p>
+      <p class="notice__next">Every in-service hydrant has an inspection inside the district's window.</p>
+    </div>
+    {% endif %}
+    <p class="panel__note">Inspection recency is its own window; it never borrows the flow-test window.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Degrading flow</h2>
+      <span class="panel__count">{{ degrading|length }}</span>
+      <span class="panel__meta">trend from the stored tests</span>
+    </div>
+    {% if degrading %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Hydrant</th>
+            <th scope="col">Trend</th>
+            <th scope="col" class="is-num">Rated at 20 psi</th>
+            <th scope="col" class="is-num">Last test</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for hydrant, derived in degrading %}
+          <tr class="ledger-row {% if derived.trend == 'RATED_FLOW_LOST' %}ledger-row--notready{% else %}ledger-row--watch{% endif %}">
+            <th scope="row"><a href="/hydrants/{{ hydrant.pk }}/">{{ hydrant.asset_tag }}</a></th>
+            <td>
+              {% if derived.trend == "RATED_FLOW_LOST" %}
+              <span class="badge badge--notready"><span class="dot dot--notready" aria-hidden="true"></span>{{ derived.trend|trend_label }}</span>
+              {% else %}
+              <span class="badge badge--watch"><span class="dot dot--watch" aria-hidden="true"></span>{{ derived.trend|trend_label }}</span>
+              {% endif %}
+            </td>
+            <td class="is-num">{{ derived.rated_gpm_20|gpm:1 }}<span class="num__unit">gpm</span></td>
+            <td class="is-num">{{ derived.latest_tested_on|date:"Y-m-d"|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="notice">
+      <p class="notice__title">No degrading or rated-flow-lost hydrants.</p>
+      <p class="notice__next">Trend compares the current test with the one before it; a decline over the district's
+        threshold appears here.</p>
+    </div>
+    {% endif %}
+    <p class="panel__note">Rated flow is one test's snapshot at the target residual — never a main-capacity model.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Delivery queue</h2>
+      <span class="panel__count">{{ unsent_outbox }}</span>
+      <span class="panel__meta">unsent notifications</span>
+    </div>
+    <div class="panel__body">
+      <p class="small">
+        Notifications are enqueued idempotently per hydrant, kind and day. Delivery is an operator action; nothing
+        leaves the district's network on its own.
+      </p>
+      <p class="small">The live list is an API read, not a page:
+        <a class="mono" href="/api/v1/notifications/">GET /api/v1/notifications/</a>.</p>
+    </div>
+    <p class="panel__note">Counts are of rows not yet sent — an unsent queue is a signal, not a failure.</p>
+  </section>
+
+</div>
+
+{% endblock %}
